@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "294575534444",
+    "project_id": "moneyplanai",
+    "storage_bucket": "moneyplanai.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:294575534444:android:d9dbe2d2269b987cd54349",
+        "android_client_info": {
+          "package_name": "com.example.collegeproject"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDV73MLVmytHBL-eo7m3peuniuBZm2Ru8o"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

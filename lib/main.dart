@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
-import 'login.dart';
-import 'signup.dart';
-import 'home.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'firebase_options.dart';
+import 'firebase_test.dart'; // <-- make sure you created this file
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
@@ -12,20 +14,10 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Login UI',
+    return const MaterialApp(
+      title: 'MoneyPlanAI',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        fontFamily: 'Helvetica',
-        primarySwatch: Colors.blue,
-        scaffoldBackgroundColor: Colors.white,
-      ),
-      initialRoute: '/',
-      routes: {
-        '/': (context) => const LoginPage(),
-        '/signup': (context) => const SignUpPage(),
-        '/home': (context) => const HomePage(),
-      },
+      home: FirebaseTest(), // ✅ using FirebaseTest directly
     );
   }
 }
