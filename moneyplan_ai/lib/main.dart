@@ -10,8 +10,12 @@ import 'signup.dart';
 import 'chatbot.dart';
 import 'nlpAssistant.dart';
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 import 'profile_page.dart';
 import 'incomedata.dart';
+=======
+import 'screens/cibil_credit_score_screen.dart';
+>>>>>>> Stashed changes
 =======
 import 'screens/cibil_credit_score_screen.dart';
 >>>>>>> Stashed changes
@@ -46,7 +50,11 @@ class MyApp extends StatelessWidget {
         '/chatbot': (context) => const ChatbotScreen(),
         '/nlpAssistant': (context) => const NLPAssistantScreen(),
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         '/incomeData': (context) => const IncomeDataPage(),
+=======
+        '/cibil': (context) => const CibilCreditScoreScreen(),
+>>>>>>> Stashed changes
 =======
         '/cibil': (context) => const CibilCreditScoreScreen(),
 >>>>>>> Stashed changes
