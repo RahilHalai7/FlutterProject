@@ -47,8 +47,19 @@ class _SignupScreenState extends State<SignupScreen> {
             password: _passwordController.text.trim(),
           );
 
-      // Update user profile with name
-      await userCredential.user?.updateDisplayName(_nameController.text.trim());
+      final user = userCredential.user;
+      if (user != null) {
+        // Update user profile with name
+        await user.updateDisplayName(_nameController.text.trim());
+
+        // Create profile in Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'name': _nameController.text.trim(),
+          'age': int.tryParse(_ageController.text.trim()) ?? 0,
+          'email': _emailController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
 
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/home');

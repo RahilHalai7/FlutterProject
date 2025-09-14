@@ -31,6 +31,7 @@ class ProfilePage extends StatelessWidget {
           }
 
           final data = snapshot.data!;
+
           return Padding(
             padding: const EdgeInsets.all(16.0),
             child: Column(
@@ -49,7 +50,19 @@ class ProfilePage extends StatelessWidget {
                   style: const TextStyle(fontSize: 18),
                 ),
                 Text(
-                  "Joined: ${data['createdAt']?.toDate().toString() ?? ''}",
+                  "Employment Type: ${data['employmentType'] ?? ''}",
+                  style: const TextStyle(fontSize: 18),
+                ),
+                Text(
+                  "Income: ${data['income'] ?? ''}",
+                  style: const TextStyle(fontSize: 18),
+                ),
+                Text(
+                  "Risk Appetite: ${data['riskAppetite'] ?? ''}",
+                  style: const TextStyle(fontSize: 18),
+                ),
+                Text(
+                  "Joined: ${data['createdAt'] != null ? (data['createdAt'] as Timestamp).toDate().toString() : ''}",
                   style: const TextStyle(fontSize: 18),
                 ),
               ],
