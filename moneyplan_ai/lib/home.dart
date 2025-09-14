@@ -355,10 +355,10 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 _buildEnhancedFeatureCard(
                   title: "Credit Score",
-                  subtitle: "Check your CIBIL score",
-                  icon: Icons.score,
+                  subtitle: "Check your CIBIL score with Surepass API",
+                  icon: Icons.credit_score,
                   color: Colors.green,
-                  onTap: () => Navigator.pushNamed(context, '/goals'),
+                  onTap: () => Navigator.pushNamed(context, '/cibil'),
                 ),
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
