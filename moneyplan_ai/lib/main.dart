@@ -2,10 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:moneyplan_ai/profile_page.dart';
+import 'package:google_generative_ai/google_generative_ai.dart';
 import 'firebase_options.dart';
 import 'home.dart';
 import 'login.dart';
 import 'signup.dart';
+import 'chatbot.dart';
+import 'nlpAssistant.dart';
+
+// Gemini API key for the chatbot and NLP assistant
+const String geminiApiKey = 'AIzaSyCNILt291xSTnaU9yz3iblFF8mCIjzPF6M';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -31,6 +37,8 @@ class MyApp extends StatelessWidget {
         '/login': (context) => const LoginScreen(),
         '/home': (context) => const HomeScreen(),
         '/profile': (context) => const ProfilePage(),
+        '/chatbot': (context) => const ChatbotScreen(),
+        '/nlpAssistant': (context) => const NLPAssistantScreen(),
       },
     );
   }
