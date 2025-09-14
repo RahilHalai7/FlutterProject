@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:ui';
 
 class SignupScreen extends StatefulWidget {
@@ -14,7 +15,8 @@ class _SignupScreenState extends State<SignupScreen> {
   final TextEditingController _ageController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final TextEditingController _confirmPasswordController = TextEditingController();
+  final TextEditingController _confirmPasswordController =
+      TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
   bool _loading = false;
@@ -39,10 +41,11 @@ class _SignupScreenState extends State<SignupScreen> {
     });
 
     try {
-      final userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-        email: _emailController.text.trim(),
-        password: _passwordController.text.trim(),
-      );
+      final userCredential = await FirebaseAuth.instance
+          .createUserWithEmailAndPassword(
+            email: _emailController.text.trim(),
+            password: _passwordController.text.trim(),
+          );
 
       // Update user profile with name
       await userCredential.user?.updateDisplayName(_nameController.text.trim());
@@ -165,16 +168,31 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ],
             if (isDesktop)
-              _buildDesktopLayout(getMaxWidth(), getHorizontalPadding(), getFormPadding(), getTitleSize())
+              _buildDesktopLayout(
+                getMaxWidth(),
+                getHorizontalPadding(),
+                getFormPadding(),
+                getTitleSize(),
+              )
             else
-              _buildMobileTabletLayout(getMaxWidth(), getHorizontalPadding(), getFormPadding(), getTitleSize()),
+              _buildMobileTabletLayout(
+                getMaxWidth(),
+                getHorizontalPadding(),
+                getFormPadding(),
+                getTitleSize(),
+              ),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildDesktopLayout(double maxWidth, double horizontalPadding, double formPadding, double titleSize) {
+  Widget _buildDesktopLayout(
+    double maxWidth,
+    double horizontalPadding,
+    double formPadding,
+    double titleSize,
+  ) {
     return Row(
       children: [
         // Left side (features)
@@ -205,10 +223,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 16),
                 Text(
                   "Start your journey to financial freedom with personalized AI-powered insights and smart planning tools.",
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(fontSize: 18, color: Colors.white70),
                 ),
                 const SizedBox(height: 32),
                 _buildFeatureList(),
@@ -225,16 +240,21 @@ class _SignupScreenState extends State<SignupScreen> {
             child: Center(
               child: ConstrainedBox(
                 constraints: BoxConstraints(maxWidth: maxWidth),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // ✅ center vertically
-                    children: [
-                      Expanded(
-                        child: _buildSignupForm(formPadding, titleSize, isCompact: false),
+                child: Column(
+                  mainAxisAlignment:
+                      MainAxisAlignment.center, // ✅ center vertically
+                  children: [
+                    Expanded(
+                      child: _buildSignupForm(
+                        formPadding,
+                        titleSize,
+                        isCompact: false,
                       ),
-                      const SizedBox(height: 30),
-                      _buildBottomLinks(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: 30),
+                    _buildBottomLinks(),
+                  ],
+                ),
               ),
             ),
           ),
@@ -243,16 +263,24 @@ class _SignupScreenState extends State<SignupScreen> {
     );
   }
 
-
-  Widget _buildMobileTabletLayout(double maxWidth, double horizontalPadding, double formPadding, double titleSize) {
+  Widget _buildMobileTabletLayout(
+    double maxWidth,
+    double horizontalPadding,
+    double formPadding,
+    double titleSize,
+  ) {
     return SafeArea(
       child: Center(
         child: SingleChildScrollView(
-          padding: EdgeInsets.symmetric(horizontal: horizontalPadding, vertical: 24),
+          padding: EdgeInsets.symmetric(
+            horizontal: horizontalPadding,
+            vertical: 24,
+          ),
           child: ConstrainedBox(
             constraints: BoxConstraints(
               maxWidth: maxWidth,
-              minHeight: MediaQuery.of(context).size.height -
+              minHeight:
+                  MediaQuery.of(context).size.height -
                   MediaQuery.of(context).padding.top -
                   MediaQuery.of(context).padding.bottom -
                   48,
@@ -271,10 +299,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 const SizedBox(height: 8),
                 Text(
                   "Start Your Financial Journey Today",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white70,
-                  ),
+                  style: TextStyle(fontSize: 16, color: Colors.white70),
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 48),
@@ -300,26 +325,39 @@ class _SignupScreenState extends State<SignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: features
-          .map((feature) => Padding(
-        padding: const EdgeInsets.only(bottom: 12),
-        child: Row(
-          children: [
-            const Icon(Icons.check_circle_outline, color: Color(0xFF8B5CF6), size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                feature,
-                style: const TextStyle(color: Colors.white70, fontSize: 16),
+          .map(
+            (feature) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.check_circle_outline,
+                    color: Color(0xFF8B5CF6),
+                    size: 20,
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      feature,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
-      ))
+          )
           .toList(),
     );
   }
 
-  Widget _buildSignupForm(double formPadding, double titleSize, {required bool isCompact}) {
+  Widget _buildSignupForm(
+    double formPadding,
+    double titleSize, {
+    required bool isCompact,
+  }) {
     return ClipRRect(
       borderRadius: BorderRadius.circular(24),
       child: BackdropFilter(
@@ -334,139 +372,177 @@ class _SignupScreenState extends State<SignupScreen> {
           child: Form(
             key: _formKey,
             child: SingleChildScrollView(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  "Create Account",
-                  style: TextStyle(
-                    fontSize: isCompact ? 24 : 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Join to manage your finances smarter",
-                  style: TextStyle(fontSize: isCompact ? 14 : 16, color: Colors.white70),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 32),
-
-                // Name + Age
-                Row(
-                  children: [
-                    Expanded(
-                      flex: 2,
-                      child: _buildTextFormField(
-                        controller: _nameController,
-                        labelText: "Full Name",
-                        prefixIcon: Icons.person_outline,
-                        keyboardType: TextInputType.name,
-                        validator: (value) => (value == null || value.isEmpty) ? 'Please enter your name' : null,
-                      ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    "Create Account",
+                    style: TextStyle(
+                      fontSize: isCompact ? 24 : 28,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      flex: 1,
-                      child: _buildTextFormField(
-                        controller: _ageController,
-                        labelText: "Age",
-                        prefixIcon: Icons.calendar_today_outlined,
-                        keyboardType: TextInputType.number,
-                        validator: (value) {
-                          if (value == null || value.isEmpty) return 'Required';
-                          final age = int.tryParse(value);
-                          if (age == null || age < 13 || age > 120) return 'Invalid age';
-                          return null;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 20),
-
-                _buildTextFormField(
-                  controller: _emailController,
-                  labelText: "Email Address",
-                  prefixIcon: Icons.email_outlined,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter your email';
-                    if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) return 'Invalid email';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                _buildTextFormField(
-                  controller: _passwordController,
-                  labelText: "Password",
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscurePassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
-                    onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                    textAlign: TextAlign.center,
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) return 'Please enter a password';
-                    if (value.length < 8) return 'At least 8 characters required';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                _buildTextFormField(
-                  controller: _confirmPasswordController,
-                  labelText: "Confirm Password",
-                  prefixIcon: Icons.lock_outline,
-                  obscureText: _obscureConfirmPassword,
-                  suffixIcon: IconButton(
-                    icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: Colors.white70),
-                    onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
-                  ),
-                  validator: (value) {
-                    if (value != _passwordController.text) return 'Passwords do not match';
-                    return null;
-                  },
-                ),
-                const SizedBox(height: 20),
-
-                // Terms
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Checkbox(
-                      value: _acceptTerms,
-                      onChanged: (value) => setState(() => _acceptTerms = value ?? false),
-                      activeColor: const Color(0xFF8B5CF6),
+                  const SizedBox(height: 8),
+                  Text(
+                    "Join to manage your finances smarter",
+                    style: TextStyle(
+                      fontSize: isCompact ? 14 : 16,
+                      color: Colors.white70,
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 12),
-                        child: Text(
-                          "I agree to the Terms of Service and Privacy Policy",
-                          style: TextStyle(color: Colors.white70, fontSize: isCompact ? 12 : 14),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 32),
+
+                  // Name + Age
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: _buildTextFormField(
+                          controller: _nameController,
+                          labelText: "Full Name",
+                          prefixIcon: Icons.person_outline,
+                          keyboardType: TextInputType.name,
+                          validator: (value) => (value == null || value.isEmpty)
+                              ? 'Please enter your name'
+                              : null,
                         ),
                       ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        flex: 1,
+                        child: _buildTextFormField(
+                          controller: _ageController,
+                          labelText: "Age",
+                          prefixIcon: Icons.calendar_today_outlined,
+                          keyboardType: TextInputType.number,
+                          validator: (value) {
+                            if (value == null || value.isEmpty)
+                              return 'Required';
+                            final age = int.tryParse(value);
+                            if (age == null || age < 13 || age > 120)
+                              return 'Invalid age';
+                            return null;
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildTextFormField(
+                    controller: _emailController,
+                    labelText: "Email Address",
+                    prefixIcon: Icons.email_outlined,
+                    keyboardType: TextInputType.emailAddress,
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Please enter your email';
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value))
+                        return 'Invalid email';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildTextFormField(
+                    controller: _passwordController,
+                    labelText: "Password",
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: _obscurePassword,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.white70,
+                      ),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
+                    ),
+                    validator: (value) {
+                      if (value == null || value.isEmpty)
+                        return 'Please enter a password';
+                      if (value.length < 8)
+                        return 'At least 8 characters required';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  _buildTextFormField(
+                    controller: _confirmPasswordController,
+                    labelText: "Confirm Password",
+                    prefixIcon: Icons.lock_outline,
+                    obscureText: _obscureConfirmPassword,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
+                        color: Colors.white70,
+                      ),
+                      onPressed: () => setState(
+                        () =>
+                            _obscureConfirmPassword = !_obscureConfirmPassword,
+                      ),
+                    ),
+                    validator: (value) {
+                      if (value != _passwordController.text)
+                        return 'Passwords do not match';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Terms
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Checkbox(
+                        value: _acceptTerms,
+                        onChanged: (value) =>
+                            setState(() => _acceptTerms = value ?? false),
+                        activeColor: const Color(0xFF8B5CF6),
+                      ),
+                      Expanded(
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Text(
+                            "I agree to the Terms of Service and Privacy Policy",
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: isCompact ? 12 : 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  if (_errorMessage != null) ...[
+                    const SizedBox(height: 16),
+                    Text(
+                      _errorMessage!,
+                      style: const TextStyle(color: Colors.redAccent),
+                      textAlign: TextAlign.center,
                     ),
                   ],
-                ),
 
-                if (_errorMessage != null) ...[
-                  const SizedBox(height: 16),
-                  Text(_errorMessage!, style: const TextStyle(color: Colors.redAccent), textAlign: TextAlign.center),
+                  const SizedBox(height: 24),
+
+                  _buildPrimaryButton(
+                    onPressed: _loading ? null : _signup,
+                    isLoading: _loading,
+                    text: "Create Account",
+                  ),
                 ],
-
-                const SizedBox(height: 24),
-
-                _buildPrimaryButton(onPressed: _loading ? null : _signup, isLoading: _loading, text: "Create Account"),
-              ],
+              ),
             ),
           ),
         ),
-      ),
       ),
     );
   }
@@ -529,21 +605,21 @@ class _SignupScreenState extends State<SignupScreen> {
         ),
         child: isLoading
             ? const SizedBox(
-          height: 20,
-          width: 20,
-          child: CircularProgressIndicator(
-            color: Colors.white,
-            strokeWidth: 2,
-          ),
-        )
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
+                ),
+              )
             : Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 18,
-            fontWeight: FontWeight.w600,
-          ),
-        ),
+                text,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
       ),
     );
   }
@@ -552,10 +628,19 @@ class _SignupScreenState extends State<SignupScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        Text("Already have an account? ", style: TextStyle(color: Colors.white70)),
+        Text(
+          "Already have an account? ",
+          style: TextStyle(color: Colors.white70),
+        ),
         GestureDetector(
           onTap: () => Navigator.pushReplacementNamed(context, '/login'),
-          child: const Text("Sign In", style: TextStyle(color: Color(0xFF8B5CF6), fontWeight: FontWeight.bold)),
+          child: const Text(
+            "Sign In",
+            style: TextStyle(
+              color: Color(0xFF8B5CF6),
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ),
       ],
     );
