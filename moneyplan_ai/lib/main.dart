@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:moneyplan_ai/profile_page.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'firebase_options.dart';
 import 'home.dart';
@@ -9,16 +8,9 @@ import 'login.dart';
 import 'signup.dart';
 import 'chatbot.dart';
 import 'nlpAssistant.dart';
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 import 'profile_page.dart';
 import 'incomedata.dart';
-=======
 import 'screens/cibil_credit_score_screen.dart';
->>>>>>> Stashed changes
-=======
-import 'screens/cibil_credit_score_screen.dart';
->>>>>>> Stashed changes
 
 // Gemini API key for the chatbot and NLP assistant
 const String geminiApiKey = 'AIzaSyCNILt291xSTnaU9yz3iblFF8mCIjzPF6M';
@@ -49,15 +41,8 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(),
         '/chatbot': (context) => const ChatbotScreen(),
         '/nlpAssistant': (context) => const NLPAssistantScreen(),
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
         '/incomeData': (context) => const IncomeDataPage(),
-=======
         '/cibil': (context) => const CibilCreditScoreScreen(),
->>>>>>> Stashed changes
-=======
-        '/cibil': (context) => const CibilCreditScoreScreen(),
->>>>>>> Stashed changes
       },
     );
   }
