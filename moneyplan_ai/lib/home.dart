@@ -148,13 +148,13 @@ class _GlobalChatbotAssistantState extends State<GlobalChatbotAssistant>
   }
 
   Widget _buildChatbotOption(
-      BuildContext context, {
-        required IconData icon,
-        required String title,
-        required String subtitle,
-        required Color color,
-        required VoidCallback onTap,
-      }) {
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return Container(
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(15),
@@ -172,10 +172,7 @@ class _GlobalChatbotAssistantState extends State<GlobalChatbotAssistant>
         ),
         title: Text(
           title,
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: color),
         ),
         subtitle: Text(subtitle),
         trailing: Icon(Icons.arrow_forward_ios, color: color, size: 16),
@@ -200,7 +197,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF0A0E27), // Deep navy background like login
+      backgroundColor: const Color(
+        0xFF0A0E27,
+      ), // Deep navy background like login
       appBar: AppBar(
         title: const Text(
           "MoneyPlanAI",
@@ -213,7 +212,9 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         shadowColor: Colors.black12,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(color: Colors.white), // White drawer icon
+        iconTheme: const IconThemeData(
+          color: Colors.white,
+        ), // White drawer icon
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -221,10 +222,15 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.1), // Glassmorphism effect like login
+                  color: Colors.white.withOpacity(
+                    0.1,
+                  ), // Glassmorphism effect like login
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(Icons.person, color: Colors.white), // White icons
+                child: const Icon(
+                  Icons.person,
+                  color: Colors.white,
+                ), // White icons
               ),
               onPressed: () => Navigator.pushNamed(context, '/profile'),
             ),
@@ -290,7 +296,9 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.1), // Glassmorphism like login
+                    color: Colors.white.withOpacity(
+                      0.1,
+                    ), // Glassmorphism like login
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white.withOpacity(0.3)),
                   ),
@@ -299,10 +307,16 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.2), // Purple accent like login
+                          color: const Color(
+                            0xFF8B5CF6,
+                          ).withOpacity(0.2), // Purple accent like login
                           borderRadius: BorderRadius.circular(15),
                         ),
-                        child: const Icon(Icons.waving_hand, color: Color(0xFF8B5CF6), size: 24),
+                        child: const Icon(
+                          Icons.waving_hand,
+                          color: Color(0xFF8B5CF6),
+                          size: 24,
+                        ),
                       ),
                       const SizedBox(width: 16),
                       Expanded(
@@ -321,7 +335,9 @@ class _HomeScreenState extends State<HomeScreen> {
                               user?.displayName ?? "User",
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.white.withOpacity(0.8), // Semi-transparent white
+                                color: Colors.white.withOpacity(
+                                  0.8,
+                                ), // Semi-transparent white
                               ),
                             ),
                           ],
@@ -406,10 +422,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF8B5CF6).withOpacity(0.2), // Purple accent
+                    color: const Color(
+                      0xFF8B5CF6,
+                    ).withOpacity(0.2), // Purple accent
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(Icons.pie_chart, color: Color(0xFF8B5CF6), size: 20),
+                  child: const Icon(
+                    Icons.pie_chart,
+                    color: Color(0xFF8B5CF6),
+                    size: 20,
+                  ),
                 ),
                 const SizedBox(width: 12),
                 const Text(
@@ -441,7 +463,11 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           _buildIncomeCategory("Salary", "₹45,000", Colors.green),
           _buildIncomeCategory("Freelance", "₹8,000", Colors.orange),
-          _buildIncomeCategory("Investments", "₹3,500", const Color(0xFF8B5CF6)),
+          _buildIncomeCategory(
+            "Investments",
+            "₹3,500",
+            const Color(0xFF8B5CF6),
+          ),
           _buildIncomeCategory("Others", "₹1,200", Colors.teal),
         ],
       ),
@@ -467,11 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
               color: color.withOpacity(0.2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Icon(
-              _getCategoryIcon(category),
-              color: color,
-              size: 20,
-            ),
+            child: Icon(_getCategoryIcon(category), color: color, size: 20),
           ),
           const SizedBox(height: 8),
           Text(
@@ -523,7 +545,11 @@ class _HomeScreenState extends State<HomeScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.insert_chart_outlined, size: 32, color: Colors.white.withOpacity(0.7)),
+          Icon(
+            Icons.insert_chart_outlined,
+            size: 32,
+            color: Colors.white.withOpacity(0.7),
+          ),
           const SizedBox(height: 8),
           Text(
             "No income data available",
@@ -535,7 +561,7 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           const SizedBox(height: 8),
           ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/addData'),
+            onPressed: () => Navigator.pushNamed(context, '/incomeData'),
             icon: const Icon(Icons.add, size: 18),
             label: const Text("Add Income Data"),
             style: ElevatedButton.styleFrom(
@@ -647,13 +673,19 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withOpacity(0.8), // Semi-transparent white
+                          color: Colors.white.withOpacity(
+                            0.8,
+                          ), // Semi-transparent white
                         ),
                       ),
                     ],
                   ),
                 ),
-                Icon(Icons.arrow_forward_ios, color: Colors.white.withOpacity(0.6), size: 16),
+                Icon(
+                  Icons.arrow_forward_ios,
+                  color: Colors.white.withOpacity(0.6),
+                  size: 16,
+                ),
               ],
             ),
           ),
@@ -664,14 +696,19 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSidebar(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(0xFF1A1B3A), // Dark background like login gradient
+      backgroundColor: const Color(
+        0xFF1A1B3A,
+      ), // Dark background like login gradient
       child: Column(
         children: [
           Container(
             height: 200,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)], // Same gradient as login buttons
+                colors: [
+                  Color(0xFF8B5CF6),
+                  Color(0xFF3B82F6),
+                ], // Same gradient as login buttons
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -683,7 +720,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
-                    Icon(Icons.account_balance_wallet, size: 50, color: Colors.white),
+                    Icon(
+                      Icons.account_balance_wallet,
+                      size: 50,
+                      color: Colors.white,
+                    ),
                     SizedBox(height: 16),
                     Text(
                       'MoneyPlanAI',
@@ -735,7 +776,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onTap: () => Navigator.pushNamed(context, '/loan'),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
+                    ),
                     child: Divider(color: Colors.white.withOpacity(0.3)),
                   ),
                   _buildDrawerItem(
@@ -764,25 +808,24 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-      ),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF8B5CF6)), // Purple accent like login
+        leading: Icon(
+          icon,
+          color: const Color(0xFF8B5CF6),
+        ), // Purple accent like login
         title: Text(
-            title,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              color: Colors.white, // White text
-            )
+          title,
+          style: const TextStyle(
+            fontWeight: FontWeight.w500,
+            color: Colors.white, // White text
+          ),
         ),
         onTap: () {
           Navigator.pop(context);
           onTap();
         },
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
     );
   }
