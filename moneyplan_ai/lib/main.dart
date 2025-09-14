@@ -9,6 +9,8 @@ import 'login.dart';
 import 'signup.dart';
 import 'chatbot.dart';
 import 'nlpAssistant.dart';
+import 'profile_page.dart';
+import 'incomedata.dart';
 
 // Gemini API key for the chatbot and NLP assistant
 const String geminiApiKey = 'AIzaSyCNILt291xSTnaU9yz3iblFF8mCIjzPF6M';
@@ -39,6 +41,7 @@ class MyApp extends StatelessWidget {
         '/profile': (context) => const ProfilePage(),
         '/chatbot': (context) => const ChatbotScreen(),
         '/nlpAssistant': (context) => const NLPAssistantScreen(),
+        '/incomeData': (context) => const IncomeDataPage(),
       },
     );
   }
