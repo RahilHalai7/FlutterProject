@@ -173,6 +173,10 @@ class _IncomeDataPageState extends State<IncomeDataPage>
       isScrollControlled: true,
       builder: (context) => StatefulBuilder(
         builder: (context, setModalState) => Container(
+          // Constrain the height to prevent overflow
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
           margin: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             gradient: const LinearGradient(
@@ -183,320 +187,340 @@ class _IncomeDataPageState extends State<IncomeDataPage>
             borderRadius: BorderRadius.circular(20),
             border: Border.all(color: Colors.white.withOpacity(0.3)),
           ),
-          child: Padding(
-            padding: EdgeInsets.only(
-              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
-              left: 20,
-              right: 20,
-              top: 20,
-            ),
-            child: SingleChildScrollView(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Header
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: const Icon(Icons.add, color: Color(0xFF8B5CF6)),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Fixed Header
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
                       ),
-                      const SizedBox(width: 12),
-                      const Text(
-                        'Add Transaction',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const Spacer(),
-                      IconButton(
-                        onPressed: () => Navigator.pop(context),
-                        icon: const Icon(Icons.close, color: Colors.white),
-                      ),
-                    ],
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Amount Field
-                  _buildModalField(
-                    label: 'Amount (₹)',
-                    controller: _amountController,
-                    icon: Icons.currency_rupee,
-                    keyboardType: TextInputType.number,
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Type Selection
-                  Container(
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(15),
-                      border: Border.all(color: Colors.white.withOpacity(0.3)),
+                      child: const Icon(Icons.add, color: Color(0xFF8B5CF6)),
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: Icon(
-                              _type == 'expense'
-                                  ? Icons.arrow_upward
-                                  : Icons.arrow_downward,
-                              color: _type == 'expense'
-                                  ? Colors.red
-                                  : Colors.green,
-                              size: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: DropdownButtonFormField<String>(
-                              value: _type,
-                              decoration: const InputDecoration(
-                                labelText: 'Transaction Type',
-                                labelStyle: TextStyle(color: Colors.white70),
-                                border: InputBorder.none,
-                              ),
-                              dropdownColor: const Color(0xFF1A1B3A),
-                              style: const TextStyle(color: Colors.white),
-                              items: const [
-                                DropdownMenuItem(
-                                  value: 'expense',
-                                  child: Text('Expense'),
-                                ),
-                                DropdownMenuItem(
-                                  value: 'income',
-                                  child: Text('Income'),
-                                ),
-                              ],
-                              onChanged: (value) {
-                                setModalState(() {
-                                  _type = value!;
-                                  _category = _categories[_type]![0]['name'];
-                                });
-                              },
-                            ),
-                          ),
-                        ],
+                    const SizedBox(width: 12),
+                    const Text(
+                      'Add Transaction',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
                       ),
                     ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Category Selection
-                  Text(
-                    'Category',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.8),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-
-                  Container(
-                    height: 120,
-                    child: GridView.builder(
-                      scrollDirection: Axis.horizontal,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            childAspectRatio: 0.8,
-                            crossAxisSpacing: 8,
-                            mainAxisSpacing: 8,
-                          ),
-                      itemCount: _categories[_type]!.length,
-                      itemBuilder: (context, index) {
-                        final category = _categories[_type]![index];
-                        final isSelected = _category == category['name'];
-
-                        return GestureDetector(
-                          onTap: () =>
-                              setModalState(() => _category = category['name']),
-                          child: Container(
-                            decoration: BoxDecoration(
-                              color: isSelected
-                                  ? category['color'].withOpacity(0.3)
-                                  : Colors.white.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: isSelected
-                                    ? category['color']
-                                    : Colors.white.withOpacity(0.3),
-                                width: isSelected ? 2 : 1,
-                              ),
-                            ),
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  category['icon'],
-                                  color: category['color'],
-                                  size: 24,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  category['name'],
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w500,
-                                  ),
-                                  textAlign: TextAlign.center,
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-
-                  // Custom Category Field
-                  if (_category == 'Other') ...[
-                    const SizedBox(height: 16),
-                    _buildModalField(
-                      label: 'Specify Category',
-                      controller: _customCategoryController,
-                      icon: Icons.category,
+                    const Spacer(),
+                    IconButton(
+                      onPressed: () => Navigator.pop(context),
+                      icon: const Icon(Icons.close, color: Colors.white),
                     ),
                   ],
+                ),
+              ),
 
-                  const SizedBox(height: 16),
-
-                  // Date Selection
-                  GestureDetector(
-                    onTap: _selectDate,
-                    child: Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(15),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                        ),
+              // Scrollable Content
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: EdgeInsets.only(
+                    bottom: MediaQuery.of(context).viewInsets.bottom,
+                    left: 20,
+                    right: 20,
+                    top: 20,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Amount Field
+                      _buildModalField(
+                        label: 'Amount (₹)',
+                        controller: _amountController,
+                        icon: Icons.currency_rupee,
+                        keyboardType: TextInputType.number,
                       ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF8B5CF6).withOpacity(0.2),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: const Icon(
-                              Icons.calendar_today,
-                              color: Color(0xFF8B5CF6),
-                              size: 20,
-                            ),
+
+                      const SizedBox(height: 16),
+
+                      // Type Selection
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(15),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.3),
                           ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                          child: Row(
                             children: [
-                              Text(
-                                'Date',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 14,
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF8B5CF6,
+                                  ).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: Icon(
+                                  _type == 'expense'
+                                      ? Icons.arrow_upward
+                                      : Icons.arrow_downward,
+                                  color: _type == 'expense'
+                                      ? Colors.red
+                                      : Colors.green,
+                                  size: 20,
                                 ),
                               ),
-                              Text(
-                                '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: DropdownButtonFormField<String>(
+                                  value: _type,
+                                  decoration: const InputDecoration(
+                                    labelText: 'Transaction Type',
+                                    labelStyle: TextStyle(
+                                      color: Colors.white70,
+                                    ),
+                                    border: InputBorder.none,
+                                  ),
+                                  dropdownColor: const Color(0xFF1A1B3A),
+                                  style: const TextStyle(color: Colors.white),
+                                  items: const [
+                                    DropdownMenuItem(
+                                      value: 'expense',
+                                      child: Text('Expense'),
+                                    ),
+                                    DropdownMenuItem(
+                                      value: 'income',
+                                      child: Text('Income'),
+                                    ),
+                                  ],
+                                  onChanged: (value) {
+                                    setModalState(() {
+                                      _type = value!;
+                                      _category =
+                                          _categories[_type]![0]['name'];
+                                    });
+                                  },
                                 ),
                               ),
                             ],
                           ),
-                          const Spacer(),
-                          const Icon(
-                            Icons.arrow_forward_ios,
-                            color: Colors.white70,
-                            size: 16,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 16),
-
-                  // Note Field
-                  _buildModalField(
-                    label: 'Note (Optional)',
-                    controller: _noteController,
-                    icon: Icons.note,
-                    maxLines: 3,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Save Button
-                  Container(
-                    width: double.infinity,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    child: ElevatedButton(
-                      onPressed: _isLoading ? null : _addTransaction,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
-                        shadowColor: Colors.transparent,
-                        padding: const EdgeInsets.symmetric(vertical: 16),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
                         ),
                       ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 20,
-                              width: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text(
-                              'Save Transaction',
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
 
-                  const SizedBox(height: 16),
-                ],
+                      const SizedBox(height: 16),
+
+                      // Category Selection
+                      Text(
+                        'Category',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: 16,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+
+                      // Reduced height for category grid
+                      SizedBox(
+                        height: 100,
+                        child: GridView.builder(
+                          scrollDirection: Axis.horizontal,
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 0.7,
+                                crossAxisSpacing: 6,
+                                mainAxisSpacing: 6,
+                              ),
+                          itemCount: _categories[_type]!.length,
+                          itemBuilder: (context, index) {
+                            final category = _categories[_type]![index];
+                            final isSelected = _category == category['name'];
+
+                            return GestureDetector(
+                              onTap: () => setModalState(
+                                () => _category = category['name'],
+                              ),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: isSelected
+                                      ? category['color'].withOpacity(0.3)
+                                      : Colors.white.withOpacity(0.1),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: isSelected
+                                        ? category['color']
+                                        : Colors.white.withOpacity(0.3),
+                                    width: isSelected ? 2 : 1,
+                                  ),
+                                ),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(
+                                      category['icon'],
+                                      color: category['color'],
+                                      size: 22,
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      category['name'],
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                      textAlign: TextAlign.center,
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+
+                      // Custom Category Field
+                      if (_category == 'Other') ...[
+                        const SizedBox(height: 16),
+                        _buildModalField(
+                          label: 'Specify Category',
+                          controller: _customCategoryController,
+                          icon: Icons.category,
+                        ),
+                      ],
+
+                      const SizedBox(height: 16),
+
+                      // Date Selection
+                      GestureDetector(
+                        onTap: _selectDate,
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(15),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.3),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: const Color(
+                                    0xFF8B5CF6,
+                                  ).withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Icon(
+                                  Icons.calendar_today,
+                                  color: Color(0xFF8B5CF6),
+                                  size: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Date',
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.8),
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const Spacer(),
+                              const Icon(
+                                Icons.arrow_forward_ios,
+                                color: Colors.white70,
+                                size: 16,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Note Field - Reduced max lines
+                      _buildModalField(
+                        label: 'Note (Optional)',
+                        controller: _noteController,
+                        icon: Icons.note,
+                        maxLines: 2,
+                      ),
+
+                      const SizedBox(height: 24),
+
+                      // Save Button
+                      Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: ElevatedButton(
+                          onPressed: _isLoading ? null : _addTransaction,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: _isLoading
+                              ? const SizedBox(
+                                  height: 20,
+                                  width: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Save Transaction',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 20),
+                    ],
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       ),
