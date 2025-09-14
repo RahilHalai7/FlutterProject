@@ -87,21 +87,25 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
         backgroundColor: Colors.green,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            _buildQueryInput(),
-            const SizedBox(height: 20),
-            _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : Expanded(
-                    child: _response.isEmpty
-                        ? _buildInitialInstructions()
-                        : _buildResponseArea(),
-                  ),
-          ],
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildQueryInput(),
+              const SizedBox(height: 20),
+              _isLoading
+                  ? const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : Expanded(
+                      child: _response.isEmpty
+                          ? _buildInitialInstructions()
+                          : _buildResponseArea(),
+                    ),
+            ],
+          ),
         ),
       ),
     );
@@ -200,25 +204,32 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
             ),
             const Divider(),
             Expanded(
-              child: SingleChildScrollView(
-                child: Markdown(
-                  data: _response,
-                  selectable: true,
-                  styleSheet: MarkdownStyleSheet(
-                    h1: const TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
+              child: Container(
+                width: double.infinity,
+                constraints: const BoxConstraints(
+                  minHeight: 100,
+                  maxHeight: double.infinity,
+                ),
+                child: SingleChildScrollView(
+                  child: MarkdownBody(
+                    data: _response,
+                    selectable: true,
+                    styleSheet: MarkdownStyleSheet(
+                      h1: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      h2: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      h3: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      p: const TextStyle(fontSize: 14),
+                      listBullet: TextStyle(color: Colors.green[700]),
                     ),
-                    h2: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    h3: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                    p: const TextStyle(fontSize: 14),
-                    listBullet: TextStyle(color: Colors.green[700]),
                   ),
                 ),
               ),
