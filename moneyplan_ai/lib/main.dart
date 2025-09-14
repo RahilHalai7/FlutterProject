@@ -11,6 +11,7 @@ import 'nlpAssistant.dart';
 import 'profile_page.dart';
 import 'incomedata.dart';
 import 'screens/cibil_credit_score_screen.dart';
+import 'screens/loan_eligibility_screen.dart';
 
 // Gemini API key for the chatbot and NLP assistant
 const String geminiApiKey = 'AIzaSyCNILt291xSTnaU9yz3iblFF8mCIjzPF6M';
@@ -43,6 +44,7 @@ class MyApp extends StatelessWidget {
         '/nlpAssistant': (context) => const NLPAssistantScreen(),
         '/incomeData': (context) => const IncomeDataPage(),
         '/cibil': (context) => const CibilCreditScoreScreen(),
+        '/loan': (context) => const LoanEligibilityScreen(),
       },
     );
   }
