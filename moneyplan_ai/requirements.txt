@@ -1,0 +1,92 @@
+# MoneyPlan AI - Flutter Project Requirements
+# This file lists all the dependencies and packages required for the project
+
+# Flutter SDK Requirements
+# Flutter SDK: >=3.0.0
+# Dart SDK: >=3.0.0
+
+# Core Flutter Dependencies (from pubspec.yaml)
+flutter:
+  sdk: flutter
+
+cupertino_icons: ^1.0.6
+firebase_core: ^2.24.2
+firebase_auth: ^4.15.3
+cloud_firestore: ^4.13.6
+firebase_storage: ^11.5.6
+firebase_messaging: ^14.7.10
+firebase_analytics: ^10.7.4
+firebase_crashlytics: ^3.4.9
+firebase_performance: ^0.9.3+16
+firebase_remote_config: ^4.3.17
+firebase_dynamic_links: ^5.4.17
+firebase_in_app_messaging: ^0.7.4+17
+firebase_ml_model_downloader: ^0.2.4+17
+firebase_app_check: ^0.2.1+17
+firebase_app_installations: ^0.2.4+17
+firebase_functions: ^4.5.7
+firebase_database: ^10.3.7
+
+# UI and Charts
+fl_chart: ^0.66.0
+provider: ^6.1.1
+
+# HTTP and API
+http: ^1.1.2
+
+# AI and ML
+google_generative_ai: ^0.2.2
+
+# Development Dependencies
+flutter_test:
+  sdk: flutter
+flutter_lints: ^3.0.0
+
+# Additional System Requirements
+# - Chrome browser (for web development)
+# - Android Studio or VS Code with Flutter extensions
+# - Git for version control
+
+# API Keys Required (to be configured):
+# - Firebase project configuration
+# - Google Generative AI API key
+# - GoldAPI.io API key (for live rates): goldapi-2s9w8qhxvqvhxd-io
+
+# Installation Instructions:
+# 1. Install Flutter SDK from https://flutter.dev/docs/get-started/install
+# 2. Run 'flutter doctor' to verify installation
+# 3. Run 'flutter pub get' to install dependencies
+# 4. Configure Firebase project and add configuration files
+# 5. Set up API keys in environment variables or configuration
+# 6. Run 'flutter run -d chrome' to start the application
+
+# Live Rates APIs Used:
+# - GoldAPI.io: https://api.goldapi.io/api/XAU/INR (Gold prices in INR)
+# - GoldAPI.io: https://api.goldapi.io/api/XAG/INR (Silver prices in INR)
+# - CoinGecko: https://api.coingecko.com/api/v3/simple/price (Bitcoin prices in INR)
+# - Fallback: https://api.metals.live/v1/spot/ (USD prices with conversion)
+
+# Platform Support:
+# - Web (Chrome)
+# - Android
+# - iOS
+# - Windows
+# - macOS
+# - Linux
+
+# Minimum System Requirements:
+# - RAM: 4GB (8GB recommended)
+# - Storage: 2GB free space
+# - Internet connection for API calls and Firebase services
+
+# Features Included:
+# - User Authentication (Firebase Auth)
+# - Real-time Database (Firestore)
+# - Live Gold/Silver/Bitcoin Rates (Indian Market)
+# - AI Financial Assistant (Google Generative AI)
+# - Income Data Visualization (FL Chart)
+# - Credit Score Prediction
+# - Investment Portfolio Management
+# - Responsive UI with Glassmorphism Design
+# - Floating Live Rates Widget
+# - Multi-platform Support

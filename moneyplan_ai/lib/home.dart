@@ -2,6 +2,282 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
+import 'services/live_rates_service.dart';
+
+// Global Floating Live Rates Widget
+class FloatingLiveRates extends StatefulWidget {
+  const FloatingLiveRates({super.key});
+
+  @override
+  State<FloatingLiveRates> createState() => _FloatingLiveRatesState();
+}
+
+class _FloatingLiveRatesState extends State<FloatingLiveRates>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _animationController;
+  late Animation<double> _slideAnimation;
+  bool _isExpanded = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _slideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _animationController, curve: Curves.easeInOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _animationController.dispose();
+    super.dispose();
+  }
+
+  void _toggleExpanded() {
+    setState(() {
+      _isExpanded = !_isExpanded;
+      if (_isExpanded) {
+        _animationController.forward();
+      } else {
+        _animationController.reverse();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Positioned(
+      left: 20,
+      bottom: 20,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AnimatedBuilder(
+            animation: _slideAnimation,
+            builder: (context, child) {
+              return Transform.translate(
+                offset: Offset(0, (1 - _slideAnimation.value) * 200),
+                child: Opacity(
+                  opacity: _slideAnimation.value,
+                  child: _isExpanded
+                      ? Container(
+                          width: 280,
+                          margin: const EdgeInsets.only(bottom: 10),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withOpacity(0.8),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color: Colors.white.withOpacity(0.2),
+                            ),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                blurRadius: 15,
+                                offset: const Offset(0, 5),
+                              ),
+                            ],
+                          ),
+                          child: FutureBuilder<Map<String, dynamic>>(
+                            future: LiveRatesService().getLiveRates(),
+                            builder: (context, snapshot) {
+                              if (snapshot.connectionState ==
+                                  ConnectionState.waiting) {
+                                return const Center(
+                                  child: Padding(
+                                    padding: EdgeInsets.all(20),
+                                    child: CircularProgressIndicator(
+                                      color: Color(0xFF8B5CF6),
+                                      strokeWidth: 2,
+                                    ),
+                                  ),
+                                );
+                              }
+
+                              final rates = snapshot.data ?? {};
+                              return Column(
+                                children: [
+                                  Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.trending_up,
+                                        color: Color(0xFF8B5CF6),
+                                        size: 16,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Text(
+                                        "Live Rates",
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      const Spacer(),
+                                      Container(
+                                        width: 6,
+                                        height: 6,
+                                        decoration: const BoxDecoration(
+                                          color: Colors.green,
+                                          shape: BoxShape.circle,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 12),
+                                  _buildCompactRateItem(
+                                    "Gold (10g)",
+                                    "₹${_formatPrice(rates['gold']?['price']?.toDouble() ?? 63250.0)}",
+                                    rates['gold']?['changePercent']
+                                            ?.toDouble() ??
+                                        0.45,
+                                    Colors.amber,
+                                    Icons.circle,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildCompactRateItem(
+                                    "Silver (10g)",
+                                    "₹${_formatPrice(rates['silver']?['price']?.toDouble() ?? 785.50)}",
+                                    rates['silver']?['changePercent']
+                                            ?.toDouble() ??
+                                        -0.32,
+                                    Colors.grey.shade300,
+                                    Icons.circle,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  _buildCompactRateItem(
+                                    "Bitcoin (1 BTC)",
+                                    "₹${_formatPrice(rates['bitcoin']?['price']?.toDouble() ?? 4125000.0)}",
+                                    rates['bitcoin']?['changePercent']
+                                            ?.toDouble() ??
+                                        1.25,
+                                    Colors.orange,
+                                    Icons.currency_bitcoin,
+                                  ),
+                                ],
+                              );
+                            },
+                          ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
+              );
+            },
+          ),
+          Container(
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(
+                colors: [Colors.green.shade400, Colors.green.shade600],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.green.withOpacity(0.3),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+            ),
+            child: FloatingActionButton(
+              onPressed: _toggleExpanded,
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              heroTag: "floating_rates",
+              child: Icon(
+                _isExpanded ? Icons.close : Icons.show_chart,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactRateItem(
+    String name,
+    String price,
+    double changePercent,
+    Color color,
+    IconData icon,
+  ) {
+    final isPositive = changePercent >= 0;
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.2),
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Icon(icon, color: color, size: 12),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                price,
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+              color: isPositive ? Colors.green : Colors.red,
+              size: 12,
+            ),
+            const SizedBox(width: 2),
+            Text(
+              "${changePercent.toStringAsFixed(2)}%",
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
+                color: isPositive ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  String _formatPrice(double price) {
+    if (price >= 10000000) {
+      return "${(price / 10000000).toStringAsFixed(2)}Cr";
+    } else if (price >= 100000) {
+      return "${(price / 100000).toStringAsFixed(2)}L";
+    } else if (price >= 1000) {
+      return "${(price / 1000).toStringAsFixed(2)}K";
+    } else {
+      return price.toStringAsFixed(2);
+    }
+  }
+}
 
 // Global Chatbot Widget that can be used across all pages
 class GlobalChatbotAssistant extends StatefulWidget {
@@ -382,6 +658,7 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
 
             const GlobalChatbotAssistant(),
+            const FloatingLiveRates(),
           ],
         ),
       ),
@@ -909,6 +1186,203 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildLiveRatesSection() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.1), // Glassmorphism
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.trending_up,
+                    color: Color(0xFF8B5CF6),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                const Text(
+                  "Live Market Rates",
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                Text(
+                  "Live",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.green.shade400,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(width: 4),
+                Container(
+                  width: 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: Colors.green.shade400,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: LiveRatesService().getLiveRates(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(
+                        color: Color(0xFF8B5CF6),
+                      ),
+                    ),
+                  );
+                }
+
+                final rates = snapshot.data ?? {};
+                return Column(
+                  children: [
+                    _buildRateCard(
+                      "Gold",
+                      "\$${rates['gold']?['price']?.toStringAsFixed(2) ?? '2000.50'}",
+                      rates['gold']?['change']?.toDouble() ?? 15.30,
+                      rates['gold']?['changePercent']?.toDouble() ?? 0.77,
+                      Icons.circle,
+                      Colors.amber,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRateCard(
+                      "Silver",
+                      "\$${rates['silver']?['price']?.toStringAsFixed(2) ?? '25.45'}",
+                      rates['silver']?['change']?.toDouble() ?? -0.25,
+                      rates['silver']?['changePercent']?.toDouble() ?? -0.97,
+                      Icons.circle,
+                      Colors.grey.shade300,
+                    ),
+                    const SizedBox(height: 12),
+                    _buildRateCard(
+                      "Bitcoin",
+                      "\$${rates['bitcoin']?['price']?.toStringAsFixed(2) ?? '45250.75'}",
+                      rates['bitcoin']?['change']?.toDouble() ?? 1250.50,
+                      rates['bitcoin']?['changePercent']?.toDouble() ?? 2.84,
+                      Icons.currency_bitcoin,
+                      Colors.orange,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRateCard(
+    String name,
+    String price,
+    double change,
+    double changePercent,
+    IconData icon,
+    Color color,
+  ) {
+    final isPositive = change >= 0;
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(15),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(icon, color: color, size: 20),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  price,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isPositive ? Icons.arrow_upward : Icons.arrow_downward,
+                    color: isPositive ? Colors.green : Colors.red,
+                    size: 16,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${changePercent.toStringAsFixed(2)}%",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: isPositive ? Colors.green : Colors.red,
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                "${isPositive ? '+' : ''}${change.toStringAsFixed(2)}",
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isPositive ? Colors.green : Colors.red,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
