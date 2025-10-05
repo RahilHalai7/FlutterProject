@@ -4,7 +4,7 @@ import '../services/surepass_api_service.dart';
 import '../models/cibil_credit_report.dart';
 
 class CibilCreditScoreScreen extends StatefulWidget {
-  const CibilCreditScoreScreen({Key? key}) : super(key: key);
+  const CibilCreditScoreScreen({super.key});
 
   @override
   State<CibilCreditScoreScreen> createState() => _CibilCreditScoreScreenState();
