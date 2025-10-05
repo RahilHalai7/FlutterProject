@@ -3,15 +3,14 @@ import 'dart:async';
 import 'package:http/http.dart' as http;
 
 class LiveRatesService {
-  // Indian market APIs for more accurate local pricing
-  static const String _goldApiUrl = 'https://api.goldapi.io/api/XAU/INR'; // Gold in INR
-  static const String _silverApiUrl = 'https://api.goldapi.io/api/XAG/INR'; // Silver in INR
+  // More accurate metals pricing via Metals-API (per troy ounce)
+  // Supply your key using: flutter run -d chrome --dart-define=METALS_API_KEY=YOUR_KEY
+  static const String _metalsApiKey = String.fromEnvironment('METALS_API_KEY', defaultValue: '');
   static const String _bitcoinApiUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=inr&include_24hr_change=true'; // Bitcoin in INR
   static const String _alternativeGoldUrl = 'https://api.metals.live/v1/spot/gold';
   static const String _alternativeSilverUrl = 'https://api.metals.live/v1/spot/silver';
   
   static const Duration _timeout = Duration(seconds: 8);
-  static const String _goldApiKey = 'goldapi-2s9w8qhxvqvhxd-io'; // Free tier API key
 
   // Fallback API for crypto prices
   static const String _cryptoApiUrl = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd';
@@ -39,30 +38,30 @@ class LiveRatesService {
 
   Future<Map<String, dynamic>> _getGoldPrice() async {
     try {
-      // Try Indian Gold API first
-      final response = await http.get(
-        Uri.parse(_goldApiUrl),
-        headers: {
-          'x-access-token': _goldApiKey,
-          'Content-Type': 'application/json',
-        },
-      ).timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Gold API returns price per troy ounce, convert to per 10g for Indian market
-        final pricePerOunce = data['price']?.toDouble() ?? 0.0;
-        final priceInINRPer10g = (pricePerOunce / 3.11035) * 10; // 1 troy ounce = 31.1035g
-        final changePercent = data['ch']?.toDouble() ?? 0.0;
-        
-        return {
-          'price': priceInINRPer10g,
-          'change': (priceInINRPer10g * changePercent / 100),
-          'changePercent': changePercent,
-        };
+      // Try Metals-API first (returns per-ounce price in INR when base=INR)
+      if (_metalsApiKey.isNotEmpty) {
+        final uri = Uri.https('metals-api.com', '/api/latest', {
+          'access_key': _metalsApiKey,
+          'base': 'INR',
+          'symbols': 'XAU',
+        });
+        final response = await http.get(uri).timeout(_timeout);
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final rates = data['rates'] ?? {};
+          final pricePerOunceINR = (rates['XAU'] is num) ? (rates['XAU'] as num).toDouble() : 0.0;
+          if (pricePerOunceINR > 0) {
+            final priceInINRPer10g = (pricePerOunceINR / 3.11035) * 10; // 1 troy ounce = 31.1035g
+            return {
+              'price': priceInINRPer10g,
+              'change': 0.0,
+              'changePercent': 0.0,
+            };
+          }
+        }
       }
     } catch (e) {
-      print('Indian Gold API error: $e');
+      print('Metals-API gold error: $e');
       
       // Try alternative API with USD to INR conversion
       try {
@@ -98,30 +97,30 @@ class LiveRatesService {
 
   Future<Map<String, dynamic>> _getSilverPrice() async {
     try {
-      // Try Indian Silver API first
-      final response = await http.get(
-        Uri.parse(_silverApiUrl),
-        headers: {
-          'x-access-token': _goldApiKey,
-          'Content-Type': 'application/json',
-        },
-      ).timeout(_timeout);
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        // Silver API returns price per troy ounce, convert to per 10g
-        final pricePerOunce = data['price']?.toDouble() ?? 0.0;
-        final priceInINRPer10g = (pricePerOunce / 3.11035) * 10;
-        final changePercent = data['ch']?.toDouble() ?? 0.0;
-        
-        return {
-          'price': priceInINRPer10g,
-          'change': (priceInINRPer10g * changePercent / 100),
-          'changePercent': changePercent,
-        };
+      // Try Metals-API first (returns per-ounce price in INR when base=INR)
+      if (_metalsApiKey.isNotEmpty) {
+        final uri = Uri.https('metals-api.com', '/api/latest', {
+          'access_key': _metalsApiKey,
+          'base': 'INR',
+          'symbols': 'XAG',
+        });
+        final response = await http.get(uri).timeout(_timeout);
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final rates = data['rates'] ?? {};
+          final pricePerOunceINR = (rates['XAG'] is num) ? (rates['XAG'] as num).toDouble() : 0.0;
+          if (pricePerOunceINR > 0) {
+            final priceInINRPer10g = (pricePerOunceINR / 3.11035) * 10;
+            return {
+              'price': priceInINRPer10g,
+              'change': 0.0,
+              'changePercent': 0.0,
+            };
+          }
+        }
       }
     } catch (e) {
-      print('Indian Silver API error: $e');
+      print('Metals-API silver error: $e');
       
       // Try alternative API with USD to INR conversion
       try {
