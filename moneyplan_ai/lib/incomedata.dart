@@ -1091,7 +1091,7 @@ class _IncomeDataPageState extends State<IncomeDataPage>
                         .map(
                           (entry) => _buildCategoryItem(entry.key, entry.value),
                         )
-                        .toList(),
+                        ,
                   ],
                 ),
               ),

@@ -430,11 +430,13 @@ class _SignupScreenState extends State<SignupScreen> {
                           prefixIcon: Icons.calendar_today_outlined,
                           keyboardType: TextInputType.number,
                           validator: (value) {
-                            if (value == null || value.isEmpty)
+                            if (value == null || value.isEmpty) {
                               return 'Required';
+                            }
                             final age = int.tryParse(value);
-                            if (age == null || age < 13 || age > 120)
+                            if (age == null || age < 13 || age > 120) {
                               return 'Invalid age';
+                            }
                             return null;
                           },
                         ),
@@ -449,10 +451,12 @@ class _SignupScreenState extends State<SignupScreen> {
                     prefixIcon: Icons.email_outlined,
                     keyboardType: TextInputType.emailAddress,
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return 'Please enter your email';
-                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value))
+                      }
+                      if (!RegExp(r'^[^@]+@[^@]+\.[^@]+').hasMatch(value)) {
                         return 'Invalid email';
+                      }
                       return null;
                     },
                   ),
@@ -474,10 +478,12 @@ class _SignupScreenState extends State<SignupScreen> {
                           setState(() => _obscurePassword = !_obscurePassword),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty)
+                      if (value == null || value.isEmpty) {
                         return 'Please enter a password';
-                      if (value.length < 8)
+                      }
+                      if (value.length < 8) {
                         return 'At least 8 characters required';
+                      }
                       return null;
                     },
                   ),
@@ -501,8 +507,9 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value != _passwordController.text)
+                      if (value != _passwordController.text) {
                         return 'Passwords do not match';
+                      }
                       return null;
                     },
                   ),

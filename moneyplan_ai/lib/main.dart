@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:google_generative_ai/google_generative_ai.dart';
 import 'firebase_options.dart';
 import 'home.dart';
 import 'login.dart';
@@ -12,6 +10,8 @@ import 'profile_page.dart';
 import 'incomedata.dart';
 import 'screens/cibil_credit_score_screen.dart';
 import 'screens/loan_eligibility_screen.dart';
+import 'screens/investment_portfolio_page.dart';
+import 'screens/retirement_planning_page.dart';
 
 // Gemini API key for the chatbot and NLP assistant
 const String geminiApiKey = 'AIzaSyCNILt291xSTnaU9yz3iblFF8mCIjzPF6M';
@@ -45,6 +45,8 @@ class MyApp extends StatelessWidget {
         '/incomeData': (context) => const IncomeDataPage(),
         '/cibil': (context) => const CibilCreditScoreScreen(),
         '/loan': (context) => const LoanEligibilityScreen(),
+        '/retirement': (context) => const RetirementPlanningPage(),
+        '/investment': (context) => const InvestmentPortfolioPage(),
       },
     );
   }
