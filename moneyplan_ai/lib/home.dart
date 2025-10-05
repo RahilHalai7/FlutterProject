@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math' as math;
 import 'services/live_rates_service.dart';
 
 // Global Floating Live Rates Widget
@@ -130,7 +132,9 @@ class _FloatingLiveRatesState extends State<FloatingLiveRates>
                                   _buildCompactRateItem(
                                     "Gold (10g)",
                                     "₹${_formatPrice(rates['gold']?['price']?.toDouble() ?? 63250.0)}",
-                                    rates['gold']?['changePercent']?.toDouble() ?? 0.45,
+                                    rates['gold']?['changePercent']
+                                            ?.toDouble() ??
+                                        0.45,
                                     Colors.amber,
                                     Icons.circle,
                                   ),
@@ -138,7 +142,9 @@ class _FloatingLiveRatesState extends State<FloatingLiveRates>
                                   _buildCompactRateItem(
                                     "Silver (10g)",
                                     "₹${_formatPrice(rates['silver']?['price']?.toDouble() ?? 785.50)}",
-                                    rates['silver']?['changePercent']?.toDouble() ?? -0.32,
+                                    rates['silver']?['changePercent']
+                                            ?.toDouble() ??
+                                        -0.32,
                                     Colors.grey.shade300,
                                     Icons.circle,
                                   ),
@@ -146,7 +152,9 @@ class _FloatingLiveRatesState extends State<FloatingLiveRates>
                                   _buildCompactRateItem(
                                     "Bitcoin (1 BTC)",
                                     "₹${_formatPrice(rates['bitcoin']?['price']?.toDouble() ?? 4125000.0)}",
-                                    rates['bitcoin']?['changePercent']?.toDouble() ?? 1.25,
+                                    rates['bitcoin']?['changePercent']
+                                            ?.toDouble() ??
+                                        1.25,
                                     Colors.orange,
                                     Icons.currency_bitcoin,
                                   ),
@@ -460,31 +468,24 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  bool hasUserData = false; // This would come from your data source
+  bool hasUserData = false;
 
   @override
   Widget build(BuildContext context) {
     final user = FirebaseAuth.instance.currentUser;
 
     return Scaffold(
-      backgroundColor: const Color(
-        0xFF0A0E27,
-      ), // Deep navy background like login
+      backgroundColor: const Color(0xFF0A0E27),
       appBar: AppBar(
         title: const Text(
           "MoneyPlanAI",
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-            color: Colors.white, // White text like login
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
         ),
-        backgroundColor: Colors.transparent, // Transparent to show gradient
+        backgroundColor: Colors.transparent,
         elevation: 0,
         shadowColor: Colors.black12,
         surfaceTintColor: Colors.transparent,
-        iconTheme: const IconThemeData(
-          color: Colors.white,
-        ), // White drawer icon
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           Container(
             margin: const EdgeInsets.only(right: 8),
@@ -492,15 +493,10 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(
-                    0.1,
-                  ), // Glassmorphism effect like login
+                  color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
-                  Icons.person,
-                  color: Colors.white,
-                ), // White icons
+                child: const Icon(Icons.person, color: Colors.white),
               ),
               onPressed: () => Navigator.pushNamed(context, '/profile'),
             ),
@@ -542,17 +538,16 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       drawer: _buildSidebar(context),
       body: Container(
-        // Same gradient background as login screen
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
             colors: [
-              Color(0xFF0A0E27), // Deep navy blue
-              Color(0xFF1A1B3A), // Dark navy
-              Color(0xFF2E1065), // Deep purple
-              Color(0xFF4C1D95), // Rich purple
-              Color(0xFF5B21B6), // Vibrant purple
+              Color(0xFF0A0E27),
+              Color(0xFF1A1B3A),
+              Color(0xFF2E1065),
+              Color(0xFF4C1D95),
+              Color(0xFF5B21B6),
             ],
             stops: [0.0, 0.25, 0.5, 0.75, 1.0],
           ),
@@ -562,13 +557,11 @@ class _HomeScreenState extends State<HomeScreen> {
             ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // Welcome Section - updated with glassmorphism effect
+                // Welcome Section
                 Container(
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(
-                      0.1,
-                    ), // Glassmorphism like login
+                    color: Colors.white.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(color: Colors.white.withOpacity(0.3)),
                   ),
@@ -577,9 +570,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: const Color(
-                            0xFF8B5CF6,
-                          ).withOpacity(0.2), // Purple accent like login
+                          color: const Color(0xFF8B5CF6).withOpacity(0.2),
                           borderRadius: BorderRadius.circular(15),
                         ),
                         child: const Icon(
@@ -598,16 +589,14 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.white, // White text like login
+                                color: Colors.white,
                               ),
                             ),
                             Text(
                               user?.displayName ?? "User",
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Colors.white.withOpacity(
-                                  0.8,
-                                ), // Semi-transparent white
+                                color: Colors.white.withOpacity(0.8),
                               ),
                             ),
                           ],
@@ -619,7 +608,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 const SizedBox(height: 24),
 
-                _buildIncomeCategorizationPanel(),
+                // Financial Overview with Enhanced Pie Chart
+                _buildFinancialOverviewWithPieChart(),
 
                 const SizedBox(height: 24),
 
@@ -635,7 +625,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   title: "Investment Portfolio",
                   subtitle: "Check out the latest trends where you can invest",
                   icon: Icons.trending_up,
-                  color: const Color(0xFF8B5CF6), // Purple like login
+                  color: const Color(0xFF8B5CF6),
                   onTap: () => Navigator.pushNamed(context, '/goals'),
                 ),
                 const SizedBox(height: 24),
@@ -663,7 +653,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   onTap: () => Navigator.pushNamed(context, '/loan'),
                 ),
 
-                const SizedBox(height: 100), // leave room for chatbot button and floating rates
+                const SizedBox(height: 100),
               ],
             ),
 
@@ -675,11 +665,379 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildIncomeCategorizationPanel() {
+  Widget _buildFinancialOverviewWithPieChart() {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+
+    if (uid == null) {
+      return _buildNoDataState();
+    }
+
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('users')
+          .doc(uid)
+          .collection('transactions')
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 600,
+            margin: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.white.withOpacity(0.3)),
+            ),
+            child: const Center(
+              child: CircularProgressIndicator(color: Color(0xFF8B5CF6)),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return _buildNoDataState();
+        }
+
+        final transactions = snapshot.data!.docs;
+        double totalIncome = 0;
+        double totalExpense = 0;
+        Map<String, double> expenseCategories = {};
+
+        for (final doc in transactions) {
+          final data = doc.data() as Map<String, dynamic>;
+          final amount = (data['amount'] as num).toDouble();
+          final type = data['type'] as String;
+          final category = data['category'] as String? ?? 'Other';
+
+          if (type == 'income') {
+            totalIncome += amount;
+          } else if (type == 'expense') {
+            totalExpense += amount;
+            expenseCategories[category] =
+                (expenseCategories[category] ?? 0) + amount;
+          }
+        }
+
+        // Calculate savings
+        double savings = totalIncome - totalExpense;
+
+        // Create categories with savings
+        Map<String, double> allCategories = Map.from(expenseCategories);
+        if (savings > 0) {
+          allCategories['Saved'] = savings;
+        }
+
+        return Container(
+          margin: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.3)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.pie_chart,
+                        color: Color(0xFF8B5CF6),
+                        size: 5,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text(
+                      "Financial Overview",
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    GestureDetector(
+                      onTap: () => Navigator.pushNamed(context, '/incomeData'),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(15),
+                        ),
+                        child: const Text(
+                          "View Details",
+                          style: TextStyle(
+                            color: Color(0xFF8B5CF6),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  children: [
+                    // Summary cards
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Total Income',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '₹${totalIncome.toStringAsFixed(0)}',
+                                  style: const TextStyle(
+                                    color: Colors.green,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Container(
+                            padding: const EdgeInsets.all(16),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.05),
+                              borderRadius: BorderRadius.circular(15),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.2),
+                              ),
+                            ),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Balance',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.8),
+                                    fontSize: 14,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  '₹${(totalIncome - totalExpense).toStringAsFixed(0)}',
+                                  style: TextStyle(
+                                    color: totalIncome - totalExpense >= 0
+                                        ? Colors.green
+                                        : Colors.red,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+
+                    // Pie Chart and Legend
+                    if (totalIncome > 0)
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Pie Chart
+                          Expanded(
+                            flex: 2,
+                            child: _buildEnhancedPieChart(
+                              allCategories,
+                              totalIncome,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          // Legend
+                          Expanded(
+                            flex: 2,
+                            child: _buildCategoryLegend(
+                              allCategories,
+                              totalIncome,
+                            ),
+                          ),
+                        ],
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildEnhancedPieChart(
+    Map<String, double> categories,
+    double totalIncome,
+  ) {
+    if (categories.isEmpty || totalIncome == 0) {
+      return Container(
+        height: 100,
+        decoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(15),
+        ),
+        child: const Center(
+          child: Text("No data", style: TextStyle(color: Colors.white70)),
+        ),
+      );
+    }
+
+    return Container(
+      height: 140,
+      child: CustomPaint(
+        size: const Size(10, 10),
+        painter: EnhancedPieChartPainter(
+          categories: categories,
+          total: totalIncome,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCategoryLegend(
+    Map<String, double> categories,
+    double totalIncome,
+  ) {
+    if (categories.isEmpty) return const SizedBox.shrink();
+
+    final sortedCategories = categories.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Container(
+      height: 140,
+      child: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: sortedCategories.map((entry) {
+            final percentage = (entry.value / totalIncome * 100);
+            final color = _getCategoryColor(
+              entry.key,
+              sortedCategories.indexOf(entry),
+            );
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          entry.key,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          '${percentage.toStringAsFixed(1)}% • ₹${entry.value.toStringAsFixed(0)}',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.7),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }).toList(),
+        ),
+      ),
+    );
+  }
+
+  Color _getCategoryColor(String category, int index) {
+    // Define colors for different categories
+    final categoryColors = {
+      'Saved': const Color(0xFF10B981), // Green for savings
+      'Food': const Color(0xFFEF4444), // Red
+      'Transport': const Color(0xFF3B82F6), // Blue
+      'Entertainment': const Color(0xFF8B5CF6), // Purple
+      'Shopping': const Color(0xFFF59E0B), // Amber
+      'Healthcare': const Color(0xFF06B6D4), // Cyan
+      'Bills': const Color(0xFFF97316), // Orange
+      'Education': const Color(0xFF84CC16), // Lime
+      'Investment': const Color(0xFFEC4899), // Pink
+      'Other': const Color(0xFF6B7280), // Gray
+    };
+
+    if (categoryColors.containsKey(category)) {
+      return categoryColors[category]!;
+    }
+
+    // Fallback colors for unknown categories
+    final colors = [
+      const Color(0xFFDC2626),
+      const Color(0xFF7C3AED),
+      const Color(0xFF059669),
+      const Color(0xFFD97706),
+      const Color(0xFFDB2777),
+      const Color(0xFF7C2D12),
+      const Color(0xFF0F766E),
+      const Color(0xFF7E22CE),
+    ];
+
+    return colors[index % colors.length];
+  }
+
+  Widget _buildNoDataState() {
     return Container(
       margin: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1), // Glassmorphism effect
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
@@ -693,9 +1051,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: const Color(
-                      0xFF8B5CF6,
-                    ).withOpacity(0.2), // Purple accent
+                    color: const Color(0xFF8B5CF6).withOpacity(0.2),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: const Icon(
@@ -704,13 +1060,13 @@ class _HomeScreenState extends State<HomeScreen> {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 30),
                 const Text(
-                  "Income Overview",
+                  "Financial Overview",
                   style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white, // White text
+                    color: Colors.white,
                   ),
                 ),
               ],
@@ -719,179 +1075,50 @@ class _HomeScreenState extends State<HomeScreen> {
 
           Padding(
             padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-            child: hasUserData ? _buildIncomeData() : _buildNoDataState(),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIncomeData() {
-    return SizedBox(
-      height: 120,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        children: [
-          _buildIncomeCategory("Salary", "₹45,000", Colors.green),
-          _buildIncomeCategory("Freelance", "₹8,000", Colors.orange),
-          _buildIncomeCategory(
-            "Investments",
-            "₹3,500",
-            const Color(0xFF8B5CF6),
-          ),
-          _buildIncomeCategory("Others", "₹1,200", Colors.teal),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildIncomeCategory(String category, String amount, Color color) {
-    return Container(
-      margin: const EdgeInsets.only(right: 16),
-      padding: const EdgeInsets.all(16),
-      width: 140,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05), // Subtle glassmorphism
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: color.withOpacity(0.3)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: color.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Icon(_getCategoryIcon(category), color: color, size: 20),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            category,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: Colors.white.withOpacity(0.9), // White text
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            amount,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'salary':
-        return Icons.work;
-      case 'freelance':
-        return Icons.laptop;
-      case 'investments':
-        return Icons.trending_up;
-      case 'others':
-        return Icons.more_horiz;
-      default:
-        return Icons.attach_money;
-    }
-  }
-
-  Widget _buildNoDataState() {
-    return Container(
-      height: 120,
-      width: double.infinity,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.05), // Subtle glassmorphism
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white.withOpacity(0.2)),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.insert_chart_outlined,
-            size: 32,
-            color: Colors.white.withOpacity(0.7),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            "No income data available",
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.8), // White text
-            ),
-          ),
-          const SizedBox(height: 8),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.pushNamed(context, '/incomeData'),
-            icon: const Icon(Icons.add, size: 18),
-            label: const Text("Add Income Data"),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF8B5CF6), // Purple like login
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(25),
+            child: Container(
+              height: 180,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(15),
+                border: Border.all(color: Colors.white.withOpacity(0.2)),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.insert_chart_outlined,
+                    size: 32,
+                    color: Colors.white.withOpacity(0.7),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    "No financial data available",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.8),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () =>
+                        Navigator.pushNamed(context, '/incomeData'),
+                    icon: const Icon(Icons.add, size: 18),
+                    label: const Text("Add Financial Data"),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF8B5CF6),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _buildFeatureGridCard({
-    required String title,
-    required IconData icon,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1), // Glassmorphism
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.3)),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: color.withOpacity(0.2),
-                    borderRadius: BorderRadius.circular(15),
-                  ),
-                  child: Icon(icon, color: color, size: 28),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  title,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white, // White text
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -905,7 +1132,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.1), // Glassmorphism
+        color: Colors.white.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Colors.white.withOpacity(0.3)),
       ),
@@ -936,7 +1163,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white, // White text
+                          color: Colors.white,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -944,9 +1171,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         subtitle,
                         style: TextStyle(
                           fontSize: 13,
-                          color: Colors.white.withOpacity(
-                            0.8,
-                          ), // Semi-transparent white
+                          color: Colors.white.withOpacity(0.8),
                         ),
                       ),
                     ],
@@ -1164,19 +1389,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Widget _buildSidebar(BuildContext context) {
     return Drawer(
-      backgroundColor: const Color(
-        0xFF1A1B3A,
-      ), // Dark background like login gradient
+      backgroundColor: const Color(0xFF1A1B3A),
       child: Column(
         children: [
           Container(
             height: 200,
             decoration: const BoxDecoration(
               gradient: LinearGradient(
-                colors: [
-                  Color(0xFF8B5CF6),
-                  Color(0xFF3B82F6),
-                ], // Same gradient as login buttons
+                colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -1214,7 +1434,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
           Expanded(
             child: Container(
-              color: const Color(0xFF1A1B3A), // Dark background
+              color: const Color(0xFF1A1B3A),
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 children: [
@@ -1278,15 +1498,12 @@ class _HomeScreenState extends State<HomeScreen> {
       margin: const EdgeInsets.symmetric(horizontal: 10, vertical: 1),
       decoration: BoxDecoration(borderRadius: BorderRadius.circular(12)),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: const Color(0xFF8B5CF6),
-        ), // Purple accent like login
+        leading: Icon(icon, color: const Color(0xFF8B5CF6)),
         title: Text(
           title,
           style: const TextStyle(
             fontWeight: FontWeight.w500,
-            color: Colors.white, // White text
+            color: Colors.white,
           ),
         ),
         onTap: () {
@@ -1297,4 +1514,100 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+// Enhanced Pie Chart Painter with Categories
+class EnhancedPieChartPainter extends CustomPainter {
+  final Map<String, double> categories;
+  final double total;
+
+  EnhancedPieChartPainter({required this.categories, required this.total});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = (size.width / 4) - 100;
+
+    if (total == 0 || categories.isEmpty) return;
+
+    double startAngle = -math.pi / 2; // Start from top
+
+    final sortedCategories = categories.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    for (int i = 0; i < sortedCategories.length; i++) {
+      final entry = sortedCategories[i];
+      final sweepAngle = (entry.value / total) * 2 * math.pi;
+
+      final paint = Paint()
+        ..color = _getCategoryColor(entry.key, i)
+        ..style = PaintingStyle.fill;
+
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        startAngle,
+        sweepAngle,
+        true,
+        paint,
+      );
+
+      startAngle += sweepAngle;
+    }
+
+    // Inner circle for donut effect
+    final innerPaint = Paint()
+      ..color = const Color(0xFF1A1B3A)
+      ..style = PaintingStyle.fill;
+
+    canvas.drawCircle(center, radius * 0.6, innerPaint);
+
+    // Border
+    final borderPaint = Paint()
+      ..color = Colors.white.withOpacity(0.2)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1;
+
+    canvas.drawCircle(center, radius, borderPaint);
+  }
+
+  Color _getCategoryColor(String category, int index) {
+    // Define colors for different categories
+    final categoryColors = {
+      'Saved': const Color(0xFF10B981), // Green for savings
+      'Food': const Color(0xFFEF4444), // Red
+      'Transport': const Color(0xFF3B82F6), // Blue
+      'Entertainment': const Color(0xFF8B5CF6), // Purple
+      'Shopping': const Color(0xFFF59E0B), // Amber
+      'Healthcare': const Color(0xFF06B6D4), // Cyan
+      'Bills': const Color(0xFFF97316), // Orange
+      'Rent': const Color(0xFF7C3AED), // Violet
+      'Groceries': const Color(0xFFDC2626), // Dark Red
+      'Education': const Color(0xFF84CC16), // Lime
+      'Investment': const Color(0xFFEC4899), // Pink
+      'Other': const Color(0xFF6B7280), // Gray
+    };
+
+    if (categoryColors.containsKey(category)) {
+      return categoryColors[category]!;
+    }
+
+    // Fallback colors for unknown categories
+    final colors = [
+      const Color(0xFFDC2626),
+      const Color(0xFF7C3AED),
+      const Color(0xFF059669),
+      const Color(0xFFD97706),
+      const Color(0xFFDB2777),
+      const Color(0xFF7C2D12),
+      const Color(0xFF0F766E),
+      const Color(0xFF7E22CE),
+      const Color(0xFF1E40AF),
+      const Color(0xFF92400E),
+    ];
+
+    return colors[index % colors.length];
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
 }
