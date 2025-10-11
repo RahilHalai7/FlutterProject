@@ -1,5 +1,3 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 
 class SurepassApiService {
   static const String _baseUrl = 'https://kyc-api.surepass.io/api/v1';

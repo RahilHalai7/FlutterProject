@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../services/ml_prediction_service.dart';
 
 class LoanEligibilityScreen extends StatefulWidget {
-  const LoanEligibilityScreen({Key? key}) : super(key: key);
+  const LoanEligibilityScreen({super.key});
 
   @override
   State<LoanEligibilityScreen> createState() => _LoanEligibilityScreenState();

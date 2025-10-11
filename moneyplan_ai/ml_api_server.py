@@ -17,6 +17,10 @@ import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import logging
+import json as pyjson
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
+import socket
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -256,6 +260,194 @@ def get_feature_importance():
             'error': 'Could not retrieve feature importance',
             'message': str(e)
         }), 500
+
+# --- Rates proxy helpers and endpoints ---
+
+def fetch_json(url: str, timeout: int = 8):
+    """Fetch JSON from a URL with basic error handling and timeout."""
+    try:
+        req = Request(url, headers={
+            'Accept': 'application/json',
+            'User-Agent': 'Mozilla/5.0 (MoneyPlanAI)'
+        })
+        with urlopen(req, timeout=timeout) as resp:
+            data = resp.read().decode('utf-8')
+            return pyjson.loads(data)
+    except (HTTPError, URLError, socket.timeout) as e:
+        logger.error(f"HTTP error fetching {url}: {e}")
+        return None
+    except Exception as e:
+        logger.error(f"Unexpected error fetching {url}: {e}")
+        return None
+
+def per10g_from_per_oz(value: float) -> float:
+    """Convert per-ounce price to per-10g price."""
+    try:
+        return float(value) * (10.0 / 31.1035)
+    except Exception:
+        return 0.0
+
+@app.route('/rates/gold', methods=['GET'])
+def rates_gold():
+    # Optional primary: goldapi.io (requires API key) for XAU/INR per ounce
+    try:
+        api_key = os.environ.get('GOLDAPI_KEY')
+        if api_key:
+            headers = {'x-access-token': api_key}
+            r = requests.get('https://www.goldapi.io/api/XAU/INR', headers=headers, timeout=6)
+            if r.ok:
+                j = r.json()
+                price_oz_inr = j.get('price') or j.get('price_gram_24k')
+                if isinstance(price_oz_inr, (int, float)) and price_oz_inr > 0:
+                    # If price_gram_24k returned, convert gram to 10g directly; else per-oz
+                    if j.get('price_gram_24k'):
+                        price_10g = float(price_oz_inr) * 10.0
+                    else:
+                        price_10g = per10g_from_per_oz(float(price_oz_inr))
+                    return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'goldapi'})
+    except Exception as e:
+        logger.error(f"GoldAPI primary error: {e}")
+    """Gold price in INR per 10g via server-side fetch to avoid CORS."""
+    primary = 'https://api.exchangerate.host/latest?base=XAU&symbols=INR'
+    fallback = 'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/xau.json'
+
+    data = fetch_json(primary)
+    if data and isinstance(data, dict):
+        rate_inr = (data.get('rates') or {}).get('INR')
+        if isinstance(rate_inr, (int, float)) and rate_inr > 0:
+            price_10g = per10g_from_per_oz(rate_inr)
+            return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'exchangerate.host'})
+
+    data = fetch_json(fallback)
+    if data and isinstance(data, dict):
+        rate_inr = (data.get('xau') or {}).get('inr')
+        if isinstance(rate_inr, (int, float)) and rate_inr > 0:
+            price_10g = per10g_from_per_oz(rate_inr)
+            return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'jsdelivr'})
+
+    # Secondary fallback: Yahoo Finance XAUUSD and USDINR
+    try:
+        # Try direct INR quote first
+        direct = fetch_json('https://query1.finance.yahoo.com/v7/finance/quote?symbols=XAUINR=X')
+        if direct and isinstance(direct, dict):
+            results = ((direct.get('quoteResponse') or {}).get('result') or [])
+            if results:
+                price = results[0].get('regularMarketPrice')
+                if isinstance(price, (int, float)) and price > 0:
+                    price_10g = per10g_from_per_oz(float(price))
+                    return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'yahoo'})
+
+        yf = fetch_json('https://query1.finance.yahoo.com/v7/finance/quote?symbols=XAUUSD=X,USDINR=X')
+        if yf and isinstance(yf, dict):
+            results = ((yf.get('quoteResponse') or {}).get('result') or [])
+            prices = {}
+            for item in results:
+                sym = item.get('symbol')
+                price = item.get('regularMarketPrice')
+                if sym and isinstance(price, (int, float)):
+                    prices[sym] = float(price)
+            xauusd = prices.get('XAUUSD=X')
+            usdinr = prices.get('USDINR=X')
+            if xauusd and usdinr:
+                rate_inr = xauusd * usdinr
+                price_10g = per10g_from_per_oz(rate_inr)
+                return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'yahoo'})
+    except Exception as e:
+        logger.error(f"Yahoo fallback (gold) error: {e}")
+
+    return jsonify({'price': 71500.0, 'change': 350.0, 'changePercent': 0.49, 'source': 'fallback'}), 200
+
+@app.route('/rates/silver', methods=['GET'])
+def rates_silver():
+    # Optional primary: goldapi.io (requires API key) for XAG/INR per ounce
+    try:
+        api_key = os.environ.get('GOLDAPI_KEY')
+        if api_key:
+            headers = {'x-access-token': api_key}
+            r = requests.get('https://www.goldapi.io/api/XAG/INR', headers=headers, timeout=6)
+            if r.ok:
+                j = r.json()
+                price_oz_inr = j.get('price') or j.get('price_gram_24k')
+                if isinstance(price_oz_inr, (int, float)) and price_oz_inr > 0:
+                    if j.get('price_gram_24k'):
+                        price_10g = float(price_oz_inr) * 10.0
+                    else:
+                        price_10g = per10g_from_per_oz(float(price_oz_inr))
+                    return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'goldapi'})
+    except Exception as e:
+        logger.error(f"GoldAPI primary error (silver): {e}")
+    """Silver price in INR per 10g via server-side fetch to avoid CORS."""
+    primary = 'https://api.exchangerate.host/latest?base=XAG&symbols=INR'
+    fallback = 'https://cdn.jsdelivr.net/gh/fawazahmed0/currency-api@1/latest/currencies/xag.json'
+
+    data = fetch_json(primary)
+    if data and isinstance(data, dict):
+        rate_inr = (data.get('rates') or {}).get('INR')
+        if isinstance(rate_inr, (int, float)) and rate_inr > 0:
+            price_10g = per10g_from_per_oz(rate_inr)
+            return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'exchangerate.host'})
+
+    data = fetch_json(fallback)
+    if data and isinstance(data, dict):
+        rate_inr = (data.get('xag') or {}).get('inr')
+        if isinstance(rate_inr, (int, float)) and rate_inr > 0:
+            price_10g = per10g_from_per_oz(rate_inr)
+            return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'jsdelivr'})
+
+    # Secondary fallback: Yahoo Finance XAGUSD and USDINR
+    try:
+        # Try direct INR quote first
+        direct = fetch_json('https://query1.finance.yahoo.com/v7/finance/quote?symbols=XAGINR=X')
+        if direct and isinstance(direct, dict):
+            results = ((direct.get('quoteResponse') or {}).get('result') or [])
+            if results:
+                price = results[0].get('regularMarketPrice')
+                if isinstance(price, (int, float)) and price > 0:
+                    price_10g = per10g_from_per_oz(float(price))
+                    return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'yahoo'})
+
+        yf = fetch_json('https://query1.finance.yahoo.com/v7/finance/quote?symbols=XAGUSD=X,USDINR=X')
+        if yf and isinstance(yf, dict):
+            results = ((yf.get('quoteResponse') or {}).get('result') or [])
+            prices = {}
+            for item in results:
+                sym = item.get('symbol')
+                price = item.get('regularMarketPrice')
+                if sym and isinstance(price, (int, float)):
+                    prices[sym] = float(price)
+            xagusd = prices.get('XAGUSD=X')
+            usdinr = prices.get('USDINR=X')
+            if xagusd and usdinr:
+                rate_inr = xagusd * usdinr
+                price_10g = per10g_from_per_oz(rate_inr)
+                return jsonify({'price': price_10g, 'change': 0.0, 'changePercent': 0.0, 'source': 'yahoo'})
+    except Exception as e:
+        logger.error(f"Yahoo fallback (silver) error: {e}")
+
+    return jsonify({'price': 950.0, 'change': 5.0, 'changePercent': 0.53, 'source': 'fallback'}), 200
+
+@app.route('/rates/bitcoin', methods=['GET'])
+def rates_bitcoin():
+    """Bitcoin price in INR via server-side fetch to avoid CORS."""
+    primary = 'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=inr&include_24hr_change=true'
+    fallback = 'https://api.coindesk.com/v1/bpi/currentprice/INR.json'
+
+    data = fetch_json(primary)
+    if data and isinstance(data, dict):
+        btc = data.get('bitcoin') or {}
+        price_inr = btc.get('inr')
+        change_pct = btc.get('inr_24h_change')
+        if isinstance(price_inr, (int, float)) and price_inr > 0:
+            return jsonify({'price': float(price_inr), 'change': float(price_inr) * float(change_pct or 0.0) / 100.0, 'changePercent': float(change_pct or 0.0), 'source': 'coingecko'})
+
+    data = fetch_json(fallback)
+    if data and isinstance(data, dict):
+        bpi_inr = ((data.get('bpi') or {}).get('INR') or {})
+        price_inr = bpi_inr.get('rate_float')
+        if isinstance(price_inr, (int, float)) and price_inr > 0:
+            return jsonify({'price': float(price_inr), 'change': 0.0, 'changePercent': 0.0, 'source': 'coindesk'})
+
+    return jsonify({'price': 4125000.0, 'change': 51562.50, 'changePercent': 1.25, 'source': 'fallback'}), 200
 
 if __name__ == '__main__':
     # Load the model on startup

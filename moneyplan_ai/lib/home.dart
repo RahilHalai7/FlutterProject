@@ -3,6 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math' as math;
 import 'services/live_rates_service.dart';
+import 'screens/investment_portfolio_page.dart';
+import 'screens/retirement_planning_page.dart';
 
 // Global Floating Live Rates Widget
 class FloatingLiveRates extends StatefulWidget {
@@ -623,10 +625,12 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
                   title: "Investment Portfolio",
-                  subtitle: "Check out the latest trends where you can invest",
+                  subtitle: "Check out tailored opportunities and manage your portfolio",
                   icon: Icons.trending_up,
                   color: const Color(0xFF8B5CF6),
-                  onTap: () => Navigator.pushNamed(context, '/goals'),
+                  onTap: () => Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const InvestmentPortfolioPage()),
+                  ),
                 ),
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
@@ -920,7 +924,7 @@ class _HomeScreenState extends State<HomeScreen> {
       );
     }
 
-    return Container(
+    return SizedBox(
       height: 140,
       child: CustomPaint(
         size: const Size(10, 10),
@@ -941,7 +945,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final sortedCategories = categories.entries.toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
-    return Container(
+    return SizedBox(
       height: 140,
       child: SingleChildScrollView(
         child: Column(
@@ -1451,7 +1455,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildDrawerItem(
                     icon: Icons.elderly,
                     title: 'Retirement Planning',
-                    onTap: () => Navigator.pushNamed(context, '/retirement'),
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => const RetirementPlanningPage(),
+                      ),
+                    ),
                   ),
                   _buildDrawerItem(
                     icon: Icons.flag,
@@ -1507,8 +1515,11 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ),
         onTap: () {
-          Navigator.pop(context);
-          onTap();
+          // Close the drawer, then navigate on next frame using safe context.
+          Navigator.of(context).pop();
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            onTap();
+          });
         },
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       ),
