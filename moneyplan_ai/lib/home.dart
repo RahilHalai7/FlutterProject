@@ -638,7 +638,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   subtitle: "Enjoy your retirement with our retirement plans",
                   icon: Icons.elderly,
                   color: Colors.orange,
-                  onTap: () => Navigator.pushNamed(context, '/goals'),
+                  onTap: () => Navigator.pushNamed(context, '/retirement'),
                 ),
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
