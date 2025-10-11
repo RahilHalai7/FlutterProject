@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:chat_bubbles/chat_bubbles.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'main.dart'; // Import to access the API key
 
 class ChatbotScreen extends StatefulWidget {
