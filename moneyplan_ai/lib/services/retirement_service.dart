@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart';
 
 class RetirementProfile {
   final int age;
@@ -77,14 +78,8 @@ class RetirementRecommendation {
 
 class RetirementService {
   final String baseUrl;
-<<<<<<< Updated upstream
-  RetirementService({this.baseUrl = 'http://localhost:5001'});
-=======
   RetirementService({String? baseUrl})
-    : baseUrl =
-          baseUrl ??
-          (kIsWeb ? 'http://localhost:5001' : 'http://10.0.2.2:5001');
->>>>>>> Stashed changes
+      : baseUrl = baseUrl ?? (kIsWeb ? 'http://localhost:5001' : 'http://10.0.2.2:5001');
 
   Future<RetirementProfile> fetchProfile() async {
     final res = await http.get(Uri.parse('$baseUrl/user/retirement-profile'));
