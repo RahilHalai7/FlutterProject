@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
 
@@ -79,7 +80,9 @@ class RetirementRecommendation {
 class RetirementService {
   final String baseUrl;
   RetirementService({String? baseUrl})
-      : baseUrl = baseUrl ?? (kIsWeb ? 'http://localhost:5001' : 'http://10.0.2.2:5001');
+    : baseUrl =
+          baseUrl ??
+          (kIsWeb ? 'http://localhost:5001' : 'http://10.0.2.2:5001');
 
   Future<RetirementProfile> fetchProfile() async {
     final res = await http.get(Uri.parse('$baseUrl/user/retirement-profile'));
