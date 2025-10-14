@@ -617,7 +617,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                 _buildEnhancedFeatureCard(
                   title: "Credit Score",
-                  subtitle: "Check your CIBIL score with Surepass API",
+                  subtitle: "Check your CIBIL score with local model",
                   icon: Icons.credit_score,
                   color: Colors.green,
                   onTap: () => Navigator.pushNamed(context, '/cibil'),
@@ -655,6 +655,15 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.account_balance,
                   color: Colors.teal,
                   onTap: () => Navigator.pushNamed(context, '/loan'),
+                ),
+
+                const SizedBox(height: 24),
+                _buildEnhancedFeatureCard(
+                  title: "EMI Calculator",
+                  subtitle: "Plan loans and monthly prepayments",
+                  icon: Icons.calculate,
+                  color: Colors.blueGrey,
+                  onTap: () => Navigator.pushNamed(context, '/emi'),
                 ),
 
                 const SizedBox(height: 100),

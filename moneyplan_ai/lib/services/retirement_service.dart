@@ -18,7 +18,8 @@ class RetirementProfile {
     required this.riskLevel,
   });
 
-  factory RetirementProfile.fromJson(Map<String, dynamic> j) => RetirementProfile(
+  factory RetirementProfile.fromJson(Map<String, dynamic> j) =>
+      RetirementProfile(
         age: (j['age'] ?? 0) as int,
         retirementAgeGoal: (j['retirement_age_goal'] ?? 60) as int,
         income: (j['income'] ?? 0).toDouble(),
@@ -41,10 +42,13 @@ class RetirementProjections {
     required this.shortfallOrSurplus,
   });
 
-  factory RetirementProjections.fromJson(Map<String, dynamic> j) => RetirementProjections(
+  factory RetirementProjections.fromJson(Map<String, dynamic> j) =>
+      RetirementProjections(
         yearsToRetirement: (j['years_to_retirement'] ?? 0) as int,
-        estimatedCorpusRequired: (j['estimated_corpus_required'] ?? 0).toDouble(),
-        projectedSavingsAtCurrentRate: (j['projected_savings_at_current_rate'] ?? 0).toDouble(),
+        estimatedCorpusRequired: (j['estimated_corpus_required'] ?? 0)
+            .toDouble(),
+        projectedSavingsAtCurrentRate:
+            (j['projected_savings_at_current_rate'] ?? 0).toDouble(),
         shortfallOrSurplus: (j['shortfall_or_surplus'] ?? 0).toDouble(),
       );
 }
@@ -62,7 +66,8 @@ class RetirementRecommendation {
     required this.risk,
   });
 
-  factory RetirementRecommendation.fromJson(Map<String, dynamic> j) => RetirementRecommendation(
+  factory RetirementRecommendation.fromJson(Map<String, dynamic> j) =>
+      RetirementRecommendation(
         title: j['title'] ?? '',
         expectedReturn: j['expected_return'] ?? '',
         category: j['category'] ?? '',
@@ -72,7 +77,14 @@ class RetirementRecommendation {
 
 class RetirementService {
   final String baseUrl;
+<<<<<<< Updated upstream
   RetirementService({this.baseUrl = 'http://localhost:5001'});
+=======
+  RetirementService({String? baseUrl})
+    : baseUrl =
+          baseUrl ??
+          (kIsWeb ? 'http://localhost:5001' : 'http://10.0.2.2:5001');
+>>>>>>> Stashed changes
 
   Future<RetirementProfile> fetchProfile() async {
     final res = await http.get(Uri.parse('$baseUrl/user/retirement-profile'));
@@ -91,7 +103,9 @@ class RetirementService {
   }
 
   Future<List<RetirementRecommendation>> fetchRecommendations() async {
-    final res = await http.get(Uri.parse('$baseUrl/retirement/recommendations'));
+    final res = await http.get(
+      Uri.parse('$baseUrl/retirement/recommendations'),
+    );
     if (res.statusCode == 200) {
       final data = jsonDecode(res.body) as List;
       return data.map((e) => RetirementRecommendation.fromJson(e)).toList();
@@ -99,16 +113,15 @@ class RetirementService {
     throw Exception('Failed to load retirement recommendations');
   }
 
-  Future<bool> planWithStrategy(RetirementRecommendation r, {double allocationPercent = 10.0}) async {
+  Future<bool> planWithStrategy(
+    RetirementRecommendation r, {
+    double allocationPercent = 10.0,
+  }) async {
     final res = await http.post(
       Uri.parse('$baseUrl/retirement/strategy'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
-        'plan': {
-          'title': r.title,
-          'category': r.category,
-          'risk': r.risk,
-        },
+        'plan': {'title': r.title, 'category': r.category, 'risk': r.risk},
         'allocation_percent': allocationPercent,
       }),
     );

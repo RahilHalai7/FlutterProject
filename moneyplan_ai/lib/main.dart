@@ -12,6 +12,7 @@ import 'screens/cibil_credit_score_screen.dart';
 import 'screens/loan_eligibility_screen.dart';
 import 'screens/investment_portfolio_page.dart';
 import 'screens/retirement_planning_page.dart';
+import 'screens/emi_calculator_screen.dart';
 
 // Gemini API key for the chatbot and NLP assistant
 const String geminiApiKey = 'AIzaSyCNILt291xSTnaU9yz3iblFF8mCIjzPF6M';
@@ -47,6 +48,7 @@ class MyApp extends StatelessWidget {
         '/loan': (context) => const LoanEligibilityScreen(),
         '/retirement': (context) => const RetirementPlanningPage(),
         '/investment': (context) => const InvestmentPortfolioPage(),
+        '/emi': (context) => const EmiCalculatorScreen(),
       },
     );
   }

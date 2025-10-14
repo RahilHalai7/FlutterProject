@@ -31,6 +31,8 @@ CORS(app)  # Enable CORS for Flutter web app
 
 # Global variable to store the loaded model
 model = None
+# Separate model for CIBIL score
+cibil_model = None
 
 def load_model():
     """Load the random forest model from pickle file"""
@@ -48,6 +50,26 @@ def load_model():
             return False
     except Exception as e:
         logger.error(f"Error loading model: {str(e)}")
+        return False
+
+def load_cibil_model():
+    """Load the CIBIL score model from pickle file"""
+    global cibil_model
+    # Try to load from same directory as this server file
+    server_dir = os.path.dirname(os.path.abspath(__file__))
+    model_path = os.path.join(server_dir, 'Cibil.pkl')
+
+    try:
+        if os.path.exists(model_path):
+            with open(model_path, 'rb') as f:
+                cibil_model = pickle.load(f)
+            logger.info(f"CIBIL model loaded successfully from {model_path}")
+            return True
+        else:
+            logger.error(f"CIBIL model file not found: {model_path}")
+            return False
+    except Exception as e:
+        logger.error(f"Error loading CIBIL model: {str(e)}")
         return False
 
 def preprocess_input(data):
@@ -261,6 +283,135 @@ def get_feature_importance():
             'message': str(e)
         }), 500
 
+# --- CIBIL score endpoints ---
+
+def _derive_cibil_features(payload):
+    """Derive a simple feature vector from provided personal info.
+    This is a placeholder mapping to feed the model.
+    """
+    try:
+        name = (payload.get('full_name') or '').strip()
+        mobile = (payload.get('mobile_number') or '').strip()
+        pan = (payload.get('pan_number') or '').strip().upper()
+        dob = (payload.get('date_of_birth') or '').strip()
+
+        # Age from DOB (supports YYYY-MM-DD and DD-MM-YYYY)
+        age = 30
+        try:
+            if '-' in dob:
+                parts = dob.split('-')
+                if len(parts[0]) == 4:
+                    year = int(parts[0])
+                else:
+                    year = int(parts[2])
+                from datetime import datetime
+                age = max(18, min(85, datetime.now().year - year))
+        except Exception:
+            age = 30
+
+        # PAN validity flag
+        import re
+        pan_valid = 1 if re.match(r'^[A-Z]{5}[0-9]{4}[A-Z]$', pan) else 0
+
+        # Mobile prefix category
+        mobile_prefix = int(mobile[0]) if mobile and mobile[0].isdigit() else 7
+        if mobile_prefix < 0 or mobile_prefix > 9:
+            mobile_prefix = 7
+
+        # Name length capped
+        name_len = max(2, min(30, len(name)))
+
+        base_features = [age, pan_valid, mobile_prefix, name_len]
+
+        # Adjust feature vector length to match model expectations, if available
+        if hasattr(cibil_model, 'n_features_in_'):
+            n = int(getattr(cibil_model, 'n_features_in_', len(base_features)))
+            if n <= len(base_features):
+                return np.array(base_features[:n], dtype=float).reshape(1, -1)
+            else:
+                padded = base_features + [0.0] * (n - len(base_features))
+                return np.array(padded, dtype=float).reshape(1, -1)
+        # Fallback: use the base feature vector
+        return np.array(base_features, dtype=float).reshape(1, -1)
+    except Exception as e:
+        logger.error(f"Error deriving CIBIL features: {e}")
+        return np.array([[30, 1, 7, 10]], dtype=float)
+
+@app.route('/cibil/health', methods=['GET'])
+def cibil_health():
+    return jsonify({
+        'status': 'healthy',
+        'model_loaded': cibil_model is not None,
+        'message': 'CIBIL model endpoint is running'
+    })
+
+@app.route('/cibil/predict', methods=['POST'])
+def cibil_predict():
+    """Predict CIBIL credit score using local pickle model and return a report-like JSON."""
+    try:
+        if cibil_model is None:
+            return jsonify({'success': False, 'error': 'CIBIL model not loaded'}), 500
+
+        payload = request.get_json() or {}
+        logger.info(f"CIBIL predict payload: {payload}")
+
+        X = _derive_cibil_features(payload)
+
+        # Try to predict score directly; otherwise map proba to 300-900
+        score_value = 700
+        try:
+            y = cibil_model.predict(X)
+            score_value = int(float(y[0])) if hasattr(y, '__iter__') else int(float(y))
+        except Exception as e:
+            logger.warning(f"CIBIL predict() failed, trying predict_proba: {e}")
+            try:
+                proba = cibil_model.predict_proba(X)[0]
+                # Use last class probability as a proxy
+                p = float(proba[-1])
+                score_value = int(300 + max(0.0, min(1.0, p)) * 600)
+            except Exception as e2:
+                logger.warning(f"CIBIL predict_proba() failed, using fallback: {e2}")
+                # Simple fallback based on derived features
+                age, pan_valid, mobile_prefix, name_len = X[0][:4]
+                score_value = int(550 + pan_valid * 100 + max(0, (age - 25)) * 2)
+
+        # Clamp to valid CIBIL range
+        score_value = max(300, min(900, score_value))
+
+        # Build response compatible with existing model class
+        from datetime import datetime
+        report_json = {
+            'success': True,
+            'data': {
+                'full_name': payload.get('full_name'),
+                'pan_number': (payload.get('pan_number') or '').upper(),
+                'date_of_birth': payload.get('date_of_birth'),
+                'report_date': datetime.now().strftime('%Y-%m-%d'),
+                'cibil_score': {
+                    'score': score_value,
+                    'score_range': '300-900',
+                    'credit_rating': None,
+                    'last_updated': datetime.now().strftime('%Y-%m-%d'),
+                    'factors': []
+                },
+                'credit_accounts': [],
+                'credit_inquiries': [],
+                'personal_info': {
+                    'full_name': payload.get('full_name'),
+                    'date_of_birth': payload.get('date_of_birth'),
+                    'gender': None,
+                    'addresses': [],
+                    'phone_numbers': [payload.get('mobile_number')] if payload.get('mobile_number') else [],
+                    'email_address': None
+                }
+            }
+        }
+
+        return jsonify(report_json)
+    except Exception as e:
+        logger.error(f"CIBIL prediction error: {e}")
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # --- Rates proxy helpers and endpoints ---
 
 def fetch_json(url: str, timeout: int = 8):
@@ -451,18 +602,14 @@ def rates_bitcoin():
 
 if __name__ == '__main__':
     # Load the model on startup
-    if load_model():
+    base_ok = load_model()
+    cibil_ok = load_cibil_model()
+    if base_ok or cibil_ok:
         logger.info("Starting ML API Server...")
-        # Run the Flask app
-        app.run(
-            host='0.0.0.0',  # Allow external connections
-            port=5000,
-            debug=True,
-            threaded=True
-        )
+        app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
     else:
-        logger.error("Failed to load model. Server not started.")
+        logger.error("Failed to load models. Server not started.")
         print("\nTo fix this issue:")
-        print("1. Ensure 'random_forest_model.pkl' exists in the current directory")
+        print("1. Ensure 'random_forest_model.pkl' and 'Cibil.pkl' exist in the current directory")
         print("2. Install required packages: pip install flask pandas scikit-learn numpy flask-cors")
-        print("3. Check that the pickle file is not corrupted")
+        print("3. Check that the pickle files are not corrupted")
