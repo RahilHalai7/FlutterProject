@@ -10,15 +10,21 @@ class UserProfile {
   final int income;
   final String riskLevel;
 
-  UserProfile({required this.name, required this.age, required this.job, required this.income, required this.riskLevel});
+  UserProfile({
+    required this.name,
+    required this.age,
+    required this.job,
+    required this.income,
+    required this.riskLevel,
+  });
 
   factory UserProfile.fromJson(Map<String, dynamic> j) => UserProfile(
-        name: j['name'] ?? '',
-        age: j['age'] ?? 0,
-        job: j['job'] ?? '',
-        income: j['income'] ?? 0,
-        riskLevel: j['risk_level'] ?? 'moderate',
-      );
+    name: j['name'] ?? '',
+    age: j['age'] ?? 19,
+    job: j['job'] ?? '',
+    income: j['income'] ?? 0,
+    riskLevel: j['risk_level'] ?? 'moderate',
+  );
 }
 
 class Opportunity {
@@ -27,14 +33,19 @@ class Opportunity {
   final String risk;
   final String category;
 
-  Opportunity({required this.title, required this.expectedReturn, required this.risk, required this.category});
+  Opportunity({
+    required this.title,
+    required this.expectedReturn,
+    required this.risk,
+    required this.category,
+  });
 
   factory Opportunity.fromJson(Map<String, dynamic> j) => Opportunity(
-        title: j['title'] ?? '',
-        expectedReturn: j['expected_return'] ?? '',
-        risk: j['risk'] ?? 'moderate',
-        category: j['category'] ?? '',
-      );
+    title: j['title'] ?? '',
+    expectedReturn: j['expected_return'] ?? '',
+    risk: j['risk'] ?? 'moderate',
+    category: j['category'] ?? '',
+  );
 }
 
 class PortfolioItem {
@@ -42,7 +53,11 @@ class PortfolioItem {
   final String category;
   double allocationPercent;
 
-  PortfolioItem({required this.title, required this.category, required this.allocationPercent});
+  PortfolioItem({
+    required this.title,
+    required this.category,
+    required this.allocationPercent,
+  });
 }
 
 class PortfolioService {
@@ -60,19 +75,26 @@ class PortfolioService {
   static Future<List<Opportunity>> fetchOpportunities() async {
     final res = await http.get(Uri.parse('$baseUrl/market/opportunities'));
     final arr = jsonDecode(res.body) as List<dynamic>;
-    return arr.map((e) => Opportunity.fromJson(e as Map<String, dynamic>)).toList();
+    return arr
+        .map((e) => Opportunity.fromJson(e as Map<String, dynamic>))
+        .toList();
   }
 
-  static Future<Map<String, dynamic>> updatePortfolio({required String action, required Opportunity item, double allocationPercent = 10.0}) async {
+  static Future<Map<String, dynamic>> updatePortfolio({
+    required String action,
+    required Opportunity item,
+    double allocationPercent = 10.0,
+  }) async {
     final payload = {
       'action': action,
-      'item': {
-        'title': item.title,
-        'category': item.category,
-      },
+      'item': {'title': item.title, 'category': item.category},
       'allocation_percent': allocationPercent,
     };
-    final res = await http.post(Uri.parse('$baseUrl/portfolio/update'), headers: {'Content-Type': 'application/json'}, body: jsonEncode(payload));
+    final res = await http.post(
+      Uri.parse('$baseUrl/portfolio/update'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(payload),
+    );
     return jsonDecode(res.body) as Map<String, dynamic>;
   }
 }

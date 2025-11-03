@@ -22,7 +22,7 @@ class RetirementProfile {
 
   factory RetirementProfile.fromJson(Map<String, dynamic> j) =>
       RetirementProfile(
-        age: (j['age'] ?? 0) as int,
+        age: (j['age'] ?? 19) as int,
         retirementAgeGoal: (j['retirement_age_goal'] ?? 60) as int,
         income: (j['income'] ?? 0).toDouble(),
         monthlyExpenses: (j['monthly_expenses'] ?? 0).toDouble(),
