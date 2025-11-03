@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
 import 'package:flutter/foundation.dart';
+import 'profile_service.dart';
 
 class RetirementProfile {
   final int age;
@@ -85,11 +86,31 @@ class RetirementService {
           (kIsWeb ? 'http://localhost:5001' : 'http://10.0.2.2:5001');
 
   Future<RetirementProfile> fetchProfile() async {
+    // Fetch backend profile
     final res = await http.get(Uri.parse('$baseUrl/user/retirement-profile'));
-    if (res.statusCode == 200) {
-      return RetirementProfile.fromJson(jsonDecode(res.body));
+    if (res.statusCode != 200) {
+      throw Exception('Failed to load retirement profile');
     }
-    throw Exception('Failed to load retirement profile');
+    var backend = RetirementProfile.fromJson(jsonDecode(res.body));
+
+    // Overlay with Firestore basic profile values where available
+    try {
+      final up = await ProfileService.fetchBasicProfile();
+      if (up != null) {
+        backend = RetirementProfile(
+          age: up.age != 0 ? up.age : backend.age,
+          retirementAgeGoal: backend.retirementAgeGoal,
+          income: up.income != 0.0 ? up.income : backend.income,
+          monthlyExpenses: backend.monthlyExpenses,
+          currentSavings: backend.currentSavings,
+          riskLevel: up.riskLevel ?? backend.riskLevel,
+        );
+      }
+    } catch (_) {
+      // ignore overlay errors, keep backend values
+    }
+
+    return backend;
   }
 
   Future<RetirementProjections> fetchProjections() async {

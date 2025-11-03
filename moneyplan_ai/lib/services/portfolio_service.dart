@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
+import 'profile_service.dart';
 
 class UserProfile {
   final String name;
@@ -67,6 +68,23 @@ class PortfolioService {
   }
 
   static Future<UserProfile> fetchUserProfile() async {
+    // First try to read from Firestore via ProfileService to avoid backend dependency
+    try {
+      final up = await ProfileService.fetchBasicProfile();
+      if (up != null) {
+        return UserProfile(
+          name: up.name,
+          age: up.age,
+          job: (up.employmentType ?? '').isNotEmpty ? up.employmentType! : '',
+          income: up.income.toInt(),
+          riskLevel: up.riskLevel ?? 'moderate',
+        );
+      }
+    } catch (_) {
+      // ignore and fallback to backend
+    }
+
+    // Fallback to backend API as previously
     final res = await http.get(Uri.parse('$baseUrl/user/profile'));
     final j = jsonDecode(res.body) as Map<String, dynamic>;
     return UserProfile.fromJson(j);

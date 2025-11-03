@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/ml_prediction_service.dart';
+import '../services/profile_service.dart';
 
 class LoanEligibilityScreen extends StatefulWidget {
   const LoanEligibilityScreen({super.key});
@@ -21,6 +22,7 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
   void initState() {
     super.initState();
     _checkMLAPIStatus();
+    _prefillFromProfile();
   }
   
   Future<void> _checkMLAPIStatus() async {
@@ -34,6 +36,20 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
       });
     } catch (e) {
       print('Error checking ML API status: $e');
+    }
+  }
+
+  Future<void> _prefillFromProfile() async {
+    try {
+      final p = await ProfileService.fetchBasicProfile();
+      if (p != null) {
+        setState(() {
+          _applicantIncomeController.text =
+              p.income > 0 ? p.income.toStringAsFixed(0) : '';
+        });
+      }
+    } catch (e) {
+      // silently ignore; form remains empty
     }
   }
   
@@ -264,202 +280,83 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
                 borderSide: BorderSide(color: Colors.blue[700]!),
               ),
             ),
-            items: items.map((String item) {
-              return DropdownMenuItem<String>(
-                value: item,
-                child: Text(item),
-              );
-            }).toList(),
+            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
             onChanged: onChanged,
           ),
-          if (helper != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              helper,
-              style: TextStyle(
-                fontSize: 12,
-                color: Colors.grey[600],
-              ),
+          if (helper != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 12, top: 4),
+              child: Text(helper, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
             ),
-          ],
         ],
       ),
     );
   }
   
+  Future<void> _predictLoanEligibility() async {
+    setState(() => _isLoading = true);
+    try {
+      final input = {
+        'Gender': _selectedGender ?? 'Male',
+        'Married': _selectedMarried ?? 'No',
+        'Dependents': _selectedDependents ?? '0',
+        'Education': _selectedEducation ?? 'Graduate',
+        'Self_Employed': _selectedSelfEmployed ?? 'No',
+        'ApplicantIncome': int.tryParse(_applicantIncomeController.text.trim()) ?? 0,
+        'CoapplicantIncome': int.tryParse(_coapplicantIncomeController.text.trim()) ?? 0,
+        'LoanAmount': int.tryParse(_loanAmountController.text.trim()) ?? 0,
+        'Loan_Amount_Term': int.tryParse(_loanTermController.text.trim()) ?? 0,
+        'Credit_History': double.tryParse(_selectedCreditHistory ?? '') ?? 1.0,
+        'Property_Area': _selectedPropertyArea ?? 'Urban',
+      };
+
+      final result = await _mlService.predictLoanEligibility(input);
+      setState(() {
+        _predictionResult = (result['prediction']?.toString() ?? 'Unknown');
+        _predictionProbability = (result['probability'] as double?);
+      });
+    } catch (e) {
+      setState(() {
+        _predictionResult = 'Error during prediction';
+        _predictionProbability = null;
+      });
+    } finally {
+      setState(() => _isLoading = false);
+    }
+  }
+  
   Widget _buildPredictionResult() {
-    final isApproved = _predictionResult == 'Y' || _predictionResult == 'Approved';
-    
+    final isEligible = _predictionResult?.toLowerCase() == 'approved';
     return Card(
-      elevation: 4,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
-          gradient: LinearGradient(
-            colors: isApproved
-                ? [Colors.green[400]!, Colors.green[600]!]
-                : [Colors.red[400]!, Colors.red[600]!],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
+      color: isEligible ? Colors.green[50] : Colors.red[50],
+      child: Padding(
+        padding: const EdgeInsets.all(16),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(
-              isApproved ? Icons.check_circle : Icons.cancel,
-              size: 48,
-              color: Colors.white,
-            ),
-            const SizedBox(height: 12),
-            Text(
-              isApproved ? 'Loan Approved!' : 'Loan Rejected',
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
+            Row(
+              children: [
+                Icon(isEligible ? Icons.check_circle : Icons.cancel, color: isEligible ? Colors.green : Colors.red),
+                const SizedBox(width: 8),
+                Text(
+                  isEligible ? 'Eligible for Loan' : 'Not Eligible',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                    color: isEligible ? Colors.green[800] : Colors.red[800],
+                  ),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             if (_predictionProbability != null)
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    'Confidence: ${(_predictionProbability! * 100).toStringAsFixed(1)}%',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.white70,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      _isMLAPIAvailable ? 'ML' : 'Rule',
-                      style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+              Text(
+                'Confidence: ${(100 * _predictionProbability!).toStringAsFixed(1)}%',
+                style: TextStyle(color: Colors.grey[700]),
               ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _resetForm,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                foregroundColor: isApproved ? Colors.green[700] : Colors.red[700],
-              ),
-              child: const Text('Check Another Application'),
-            ),
           ],
         ),
       ),
     );
-  }
-  
-  void _resetForm() {
-    setState(() {
-      _predictionResult = null;
-      _predictionProbability = null;
-    });
-    
-    // Clear all form fields
-    _applicantIncomeController.clear();
-    _coapplicantIncomeController.clear();
-    _loanAmountController.clear();
-    _loanTermController.clear();
-    
-    setState(() {
-      _selectedGender = null;
-      _selectedMarried = null;
-      _selectedDependents = null;
-      _selectedEducation = null;
-      _selectedSelfEmployed = null;
-      _selectedCreditHistory = null;
-      _selectedPropertyArea = null;
-    });
-  }
-  
-  Future<void> _predictLoanEligibility() async {
-    if (!_validateForm()) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please fill all required fields'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-    
-    setState(() {
-      _isLoading = true;
-    });
-    
-    try {
-      final inputData = {
-        'Gender': _selectedGender,
-        'Married': _selectedMarried,
-        'Dependents': _selectedDependents,
-        'Education': _selectedEducation,
-        'Self_Employed': _selectedSelfEmployed,
-        'ApplicantIncome': double.tryParse(_applicantIncomeController.text) ?? 0,
-        'CoapplicantIncome': double.tryParse(_coapplicantIncomeController.text) ?? 0,
-        'LoanAmount': double.tryParse(_loanAmountController.text) ?? 0,
-        'Loan_Amount_Term': double.tryParse(_loanTermController.text) ?? 0,
-        'Credit_History': double.tryParse(_selectedCreditHistory ?? '0') ?? 0,
-        'Property_Area': _selectedPropertyArea,
-      };
-      
-      final result = await _mlService.predictLoanEligibility(inputData);
-      
-      setState(() {
-        _predictionResult = result['prediction'];
-        _predictionProbability = result['probability'];
-      });
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error making prediction: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
-  }
-  
-  bool _validateForm() {
-    return _selectedGender != null &&
-           _selectedMarried != null &&
-           _selectedDependents != null &&
-           _selectedEducation != null &&
-           _selectedSelfEmployed != null &&
-           _applicantIncomeController.text.isNotEmpty &&
-           _loanAmountController.text.isNotEmpty &&
-           _loanTermController.text.isNotEmpty &&
-           _selectedCreditHistory != null &&
-           _selectedPropertyArea != null;
-  }
-  
-  @override
-  void dispose() {
-    _applicantIncomeController.dispose();
-    _coapplicantIncomeController.dispose();
-    _loanAmountController.dispose();
-    _loanTermController.dispose();
-    super.dispose();
   }
 }
