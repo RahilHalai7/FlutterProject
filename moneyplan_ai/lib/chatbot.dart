@@ -105,87 +105,108 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0E27),
       appBar: AppBar(
         title: const Text(
           'FinAI Chatbot',
-          style: TextStyle(color: Colors.white),
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.blue,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        surfaceTintColor: Colors.transparent,
         iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: Column(
-        children: [
-          Expanded(
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10),
-              decoration: BoxDecoration(color: Colors.grey[100]),
-              child: ListView.builder(
-                controller: _scrollController,
-                itemCount: _messages.length,
-                itemBuilder: (context, index) {
-                  final message = _messages[index];
-                  return _buildMessageBubble(message);
-                },
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0A0E27),
+              Color(0xFF1A1B3A),
+              Color(0xFF2E1065),
+              Color(0xFF4C1D95),
+              Color(0xFF5B21B6),
+            ],
+            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+          ),
+        ),
+        child: Column(
+          children: [
+            Expanded(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10),
+                // Remove light background to let gradient show
+                decoration: const BoxDecoration(color: Colors.transparent),
+                child: ListView.builder(
+                  controller: _scrollController,
+                  itemCount: _messages.length,
+                  itemBuilder: (context, index) {
+                    final message = _messages[index];
+                    return _buildMessageBubble(message);
+                  },
+                ),
               ),
             ),
-          ),
-          _buildInputArea(),
-        ],
+            _buildInputArea(),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildMessageBubble(ChatMessage message) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 5),
+      padding: const EdgeInsets.symmetric(vertical: 5, horizontal: 6),
       child: message.isUser
           ? BubbleSpecialThree(
               text: message.text,
-              color: Colors.blue,
+              color: const Color(0xFF5B21B6),
               tail: true,
               isSender: true,
               textStyle: const TextStyle(color: Colors.white, fontSize: 16),
             )
           : BubbleSpecialThree(
               text: message.text,
-              color: Colors.white,
+              color: const Color(0xFF1A1B3A),
               tail: true,
               isSender: false,
-              textStyle: const TextStyle(color: Colors.black, fontSize: 16),
+              textStyle: const TextStyle(color: Colors.white, fontSize: 16),
             ),
     );
   }
 
   Widget _buildInputArea() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
-            spreadRadius: 1,
-            blurRadius: 3,
-            offset: const Offset(0, -1),
-          ),
-        ],
+        color: Colors.white.withOpacity(0.06),
+        border: Border(
+          top: BorderSide(color: Colors.white.withOpacity(0.08)),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
             child: TextField(
               controller: _textController,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Ask a financial question...',
-                border: OutlineInputBorder(
+                hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
-                  borderSide: BorderSide.none,
+                  borderSide: BorderSide(color: Colors.white.withOpacity(0.2)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(25.0),
+                  borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 2),
                 ),
                 filled: true,
-                fillColor: Colors.grey[200],
+                fillColor: Colors.white.withOpacity(0.08),
                 contentPadding: const EdgeInsets.symmetric(
                   horizontal: 20.0,
-                  vertical: 10.0,
+                  vertical: 12.0,
                 ),
               ),
               textCapitalization: TextCapitalization.sentences,
@@ -194,12 +215,40 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
           ),
           const SizedBox(width: 8.0),
           _isLoading
-              ? const CircularProgressIndicator()
-              : FloatingActionButton(
-                  onPressed: _sendMessage,
-                  backgroundColor: Colors.blue,
-                  elevation: 2,
-                  child: const Icon(Icons.send, color: Colors.white),
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                )
+              : Container(
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        Color(0xFF4C1D95),
+                        Color(0xFF6D28D9),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.25),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: _sendMessage,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.transparent,
+                      shadowColor: Colors.transparent,
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                    ),
+                    child: const Icon(Icons.send, color: Colors.white),
+                  ),
                 ),
         ],
       ),

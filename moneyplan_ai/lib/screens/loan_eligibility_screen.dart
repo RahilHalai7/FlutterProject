@@ -73,14 +73,36 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: const Color(0xFF0A0E27),
       appBar: AppBar(
-        title: const Text('Loan Eligibility Checker'),
-        backgroundColor: Colors.blue[700],
-        foregroundColor: Colors.white,
+        title: const Text(
+          'Loan Eligibility Checker',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.black12,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0A0E27),
+              Color(0xFF1A1B3A),
+              Color(0xFF2E1065),
+              Color(0xFF4C1D95),
+              Color(0xFF5B21B6),
+            ],
+            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+          ),
+        ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
@@ -88,7 +110,7 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: Colors.white,
               ),
               textAlign: TextAlign.center,
             ),
@@ -187,17 +209,32 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
             const SizedBox(height: 30),
             
             // Predict Button
-            ElevatedButton(
-              onPressed: _isLoading ? null : _predictLoanEligibility,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue[700],
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            Container(
+              height: 56,
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
                 ),
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                    blurRadius: 12,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
-              child: _isLoading
+              child: ElevatedButton(
+                onPressed: _isLoading ? null : _predictLoanEligibility,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  shadowColor: Colors.transparent,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: _isLoading
                   ? const CircularProgressIndicator(color: Colors.white)
                   : Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -215,7 +252,8 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
                         ),
                       ],
                     ),
-            ),
+                ),
+              ),
             
             // Prediction Result
             if (_predictionResult != null) ...[
@@ -225,7 +263,8 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
   
   Widget _buildSectionTitle(String title) {
@@ -233,10 +272,10 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         title,
-        style: TextStyle(
-          fontSize: 16,
+        style: const TextStyle(
+          fontSize: 18,
           fontWeight: FontWeight.bold,
-          color: Colors.blue[700],
+          color: Colors.white,
         ),
       ),
     );
@@ -248,15 +287,25 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
       child: TextFormField(
         controller: controller,
         keyboardType: keyboardType,
+        style: const TextStyle(color: Colors.white),
         decoration: InputDecoration(
           labelText: label,
+          labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.1),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
           ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(8),
-            borderSide: BorderSide(color: Colors.blue[700]!),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(16),
+            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
           ),
+          focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.all(Radius.circular(16)),
+            borderSide: BorderSide(color: Color(0xFF8B5CF6), width: 2),
+          ),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         ),
       ),
     );
@@ -270,17 +319,23 @@ class _LoanEligibilityScreenState extends State<LoanEligibilityScreen> {
         children: [
           DropdownButtonFormField<String>(
             value: value,
+            style: const TextStyle(color: Colors.white),
+            dropdownColor: const Color(0xFF1A1B3A),
             decoration: InputDecoration(
               labelText: label,
+              labelStyle: TextStyle(color: Colors.white.withOpacity(0.8)),
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.1),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
               ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(8),
-                borderSide: BorderSide(color: Colors.blue[700]!),
+              focusedBorder: const OutlineInputBorder(
+                borderRadius: BorderRadius.all(Radius.circular(16)),
+                borderSide: BorderSide(color: Color(0xFF8B5CF6), width: 2),
               ),
             ),
-            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e))).toList(),
+            items: items.map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
             onChanged: onChanged,
           ),
           if (helper != null)

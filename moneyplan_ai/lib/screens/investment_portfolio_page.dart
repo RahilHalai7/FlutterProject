@@ -131,8 +131,34 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Your Investment Portfolio')),
-      body: LayoutBuilder(builder: (context, constraints) {
+      backgroundColor: const Color(0xFF0A0E27),
+      appBar: AppBar(
+        title: const Text(
+          'Your Investment Portfolio',
+          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        shadowColor: Colors.black12,
+        surfaceTintColor: Colors.transparent,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Color(0xFF0A0E27),
+              Color(0xFF1A1B3A),
+              Color(0xFF2E1065),
+              Color(0xFF4C1D95),
+              Color(0xFF5B21B6),
+            ],
+            stops: [0.0, 0.25, 0.5, 0.75, 1.0],
+          ),
+        ),
+        child: LayoutBuilder(builder: (context, constraints) {
         final isWide = constraints.maxWidth > 700;
         return SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -194,6 +220,7 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
           ]),
         );
       }),
-    );
-  }
+    ),
+  );
+}
 }
