@@ -1,7 +1,9 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:shimmer/shimmer.dart';
 import '../services/retirement_service.dart';
+import '../services/retirement_settings_service.dart';
 
 class RetirementPlanningPage extends StatefulWidget {
   const RetirementPlanningPage({super.key});
@@ -15,9 +17,15 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
 
   RetirementProfile? _profile;
   RetirementProjections? _projections;
-  List<RetirementRecommendation> _recs = [];
   bool _loading = true;
   bool _error = false;
+  RetirementAssumptions _assumptions = const RetirementAssumptions();
+  RetirementProjections? _customProjections;
+  final TextEditingController _monthlyContributionCtrl = TextEditingController();
+  final TextEditingController _incomeCtrl = TextEditingController();
+  final TextEditingController _currentSavingsCtrl = TextEditingController();
+  // Removed manual save; assumptions are loaded from DB when available
+  // Removed _savingAssumptions state; no manual saving in UI.
 
   @override
   void initState() {
@@ -31,19 +39,54 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
       _error = false;
     });
     try {
-      final p = await _service.fetchProfile();
-      final pr = await _service.fetchProjections();
-      final recs = await _service.fetchRecommendations();
+      // Load saved assumptions first
+      var a = await RetirementSettingsService.loadAssumptions();
+      _monthlyContributionCtrl.text = a.monthlyContribution.toStringAsFixed(0);
+
+      // Try to fetch profile from backend, fallback to defaults
+      RetirementProfile? p;
+      try {
+        p = await _service.fetchProfile();
+      } catch (_) {
+        // Minimal sensible defaults if backend is unavailable
+        p = RetirementProfile(
+          age: 30,
+          retirementAgeGoal: 60,
+          income: 800000,
+          monthlyExpenses: 40000,
+          currentSavings: 300000,
+          riskLevel: 'moderate',
+        );
+      }
+ 
+
+      // Try to fetch projections from backend, else compute locally
+      RetirementProjections? pr;
+      try {
+        pr = await _service.fetchProjections();
+      } catch (_) {
+        pr = _calcProjections(p!, a);
+      }
+
+      final custom = _calcProjections(p!, a);
+
+      // Sync profile adjustment inputs with loaded values
+      _incomeCtrl.text = p!.income.toStringAsFixed(0);
+      _currentSavingsCtrl.text = p.currentSavings.toStringAsFixed(0);
+
       setState(() {
         _profile = p;
         _projections = pr;
-        _recs = recs;
+        _assumptions = a;
+        _customProjections = custom;
         _loading = false;
+        _error = false;
       });
     } catch (e) {
+      // If something truly unexpected occurs, avoid crashing UI
       setState(() {
-        _error = true;
         _loading = false;
+        _error = false; // keep UI rendering with any partial data
       });
     }
   }
@@ -66,6 +109,10 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
                         children: [
                           _buildProfileCard(),
                           const SizedBox(height: 16),
+                          _buildProfileAdjustmentsCard(),
+                          const SizedBox(height: 16),
+                          _buildAssumptionsCard(),
+                          const SizedBox(height: 16),
                           isWide
                               ? Row(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -83,7 +130,7 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
                                   ],
                                 ),
                           const SizedBox(height: 16),
-                          _buildRecommendations(),
+                          // Recommendations removed per request
                         ],
                       ),
                     );
@@ -133,7 +180,7 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
   }
 
   Widget _buildProfileCard() {
-    final p = _profile!;
+    final p = _safeProfile();
     return Card(
       elevation: 2,
       child: Padding(
@@ -166,7 +213,7 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
   }
 
   Widget _buildProjectionChartCard() {
-    final pr = _projections!;
+    final pr = _getActiveProjections();
     final required = pr.estimatedCorpusRequired;
     final projected = pr.projectedSavingsAtCurrentRate;
     final sections = [
@@ -241,7 +288,7 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
   }
 
   Widget _buildProjectionStatsCard() {
-    final pr = _projections!;
+    final pr = _getActiveProjections();
     return Card(
       elevation: 2,
       child: Padding(
@@ -262,7 +309,9 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
     );
   }
 
-  Widget _buildRecommendations() {
+
+  Widget _buildAssumptionsCard() {
+    final a = _assumptions;
     return Card(
       elevation: 2,
       child: Padding(
@@ -270,70 +319,184 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Recommendations', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-            const SizedBox(height: 8),
-            ..._recs.map((r) => _recTile(r)).toList(),
+            const Text('Assumptions', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 24,
+              runSpacing: 16,
+              children: [
+                _assumptionSlider(
+                  label: 'Expected Return (%)',
+                  value: a.expectedReturnPct,
+                  min: 2,
+                  max: 20,
+                  onChanged: (v) => _updateAssumptions(a.copyWith(expectedReturnPct: v)),
+                ),
+                _assumptionSlider(
+                  label: 'Inflation (%)',
+                  value: a.inflationPct,
+                  min: 0,
+                  max: 10,
+                  onChanged: (v) => _updateAssumptions(a.copyWith(inflationPct: v)),
+                ),
+                _assumptionSlider(
+                  label: 'Salary Growth (%)',
+                  value: a.salaryGrowthPct,
+                  min: 0,
+                  max: 15,
+                  onChanged: (v) => _updateAssumptions(a.copyWith(salaryGrowthPct: v)),
+                ),
+                _assumptionSlider(
+                  label: 'Retirement Duration (years)',
+                  value: a.retirementDurationYears.toDouble(),
+                  min: 10,
+                  max: 40,
+                  onChanged: (v) => _updateAssumptions(a.copyWith(retirementDurationYears: v.round())),
+                ),
+                _assumptionSlider(
+                  label: 'Retirement Age',
+                  value: (a.retirementAgeGoalOverride ?? _profile?.retirementAgeGoal ?? 60).toDouble(),
+                  min: 45,
+                  max: 70,
+                  onChanged: (v) => _updateAssumptions(a.copyWith(retirementAgeGoalOverride: v.round())),
+                ),
+                _assumptionTextField(
+                  label: 'Monthly Contribution (₹)',
+                  controller: _monthlyContributionCtrl,
+                  onSubmitted: (txt) {
+                    final parsed = double.tryParse(txt) ?? a.monthlyContribution;
+                    _monthlyContributionCtrl.text = parsed.toStringAsFixed(0);
+                    _updateAssumptions(a.copyWith(monthlyContribution: parsed));
+                  },
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Removed manual save button to rely on DB-loaded assumptions
+            // Row(
+            //   children: [
+            //     ElevatedButton(
+            //       onPressed: _savingAssumptions ? null : _saveAssumptions,
+            //       child: _savingAssumptions
+            //           ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+            //           : const Text('Save Assumptions'),
+            //     ),
+            //   ],
+            // ),
           ],
         ),
       ),
     );
   }
 
-  Widget _recTile(RetirementRecommendation r) {
-    final riskColor = {
-      'low': Colors.green,
-      'moderate': Colors.orange,
-      'high': Colors.red,
-    }[r.risk] ?? Colors.orange;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Row(
+  // Helpers re-added
+  Widget _assumptionSlider({
+    required String label,
+    required double value,
+    required double min,
+    required double max,
+    required ValueChanged<double> onChanged,
+  }) {
+    return SizedBox(
+      width: 320,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(r.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text('${r.category} • Expected: ${r.expectedReturn}')
-              ],
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(label, style: const TextStyle(color: Colors.grey)),
+              Text(value.toStringAsFixed(1)),
+            ],
           ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: riskColor.withOpacity(0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(r.risk, style: TextStyle(color: riskColor)),
+          Slider(
+            value: value,
+            min: min,
+            max: max,
+            divisions: (max - min).round(),
+            label: value.toStringAsFixed(1),
+            onChanged: onChanged,
           ),
-          const SizedBox(width: 12),
-          ElevatedButton(
-            onPressed: () async {
-              final ok = await _service.planWithStrategy(r);
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text(ok ? 'Strategy Saved' : 'Action Failed'),
-                  content: Text(ok
-                      ? 'Added ${r.title} to your retirement strategy.'
-                      : 'Could not update strategy. Please try again.'),
-                  actions: [
-                    TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('OK')),
-                  ],
-                ),
-              );
-            },
-            child: const Text('Plan with this'),
-          )
         ],
       ),
+    );
+  }
+
+  Widget _assumptionTextField({
+    required String label,
+    required TextEditingController controller,
+    required ValueChanged<String> onSubmitted,
+  }) {
+    return SizedBox(
+      width: 320,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: const TextStyle(color: Colors.grey)),
+          const SizedBox(height: 4),
+          TextField(
+            controller: controller,
+            keyboardType: TextInputType.number,
+            decoration: const InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: 'e.g., 10000',
+            ),
+            onSubmitted: onSubmitted,
+          ),
+        ],
+      ),
+    );
+  }
+
+  RetirementProjections _getActiveProjections() {
+    return _customProjections ?? _projections ?? _calcProjections(_safeProfile(), _assumptions);
+  }
+
+  void _updateAssumptions(RetirementAssumptions a) {
+    setState(() {
+      _assumptions = a;
+      _customProjections = _calcProjections(_safeProfile(), _assumptions);
+    });
+  }
+
+  // Removed manual save of assumptions; values are loaded from Firestore when available.
+
+  RetirementProjections _calcProjections(RetirementProfile p, RetirementAssumptions a) {
+    final int goalAge = a.retirementAgeGoalOverride ?? p.retirementAgeGoal;
+    final int yearsToRetirement = (goalAge - p.age).clamp(0, 100);
+    final double r = (a.expectedReturnPct - a.inflationPct) / 100.0;
+    final double g = a.salaryGrowthPct / 100.0;
+
+    // Expense at retirement (inflation-adjusted)
+    final double annualExpenseAtRetirement = p.monthlyExpenses * 12 * math.pow(1 + a.inflationPct / 100.0, yearsToRetirement).toDouble();
+
+    // Required corpus as PV of an annuity over retirementDurationYears at real return r
+    final int m = a.retirementDurationYears;
+    double requiredCorpus;
+    if (r <= 0.000001) {
+      requiredCorpus = annualExpenseAtRetirement * m;
+    } else {
+      requiredCorpus = annualExpenseAtRetirement * (1 - math.pow(1 + r, -m)) / r;
+    }
+
+    // Projected savings
+    final double currentFV = p.currentSavings * math.pow(1 + r, yearsToRetirement).toDouble();
+    final double C = a.monthlyContribution * 12;
+    double contribFV;
+    if ((r - g).abs() < 1e-9) {
+      contribFV = C * yearsToRetirement * math.pow(1 + r, yearsToRetirement - 1).toDouble();
+    } else {
+      contribFV = C * (math.pow(1 + r, yearsToRetirement) - math.pow(1 + g, yearsToRetirement)) / (r - g);
+    }
+    final double projectedCorpus = currentFV + contribFV;
+
+    final double surplus = projectedCorpus - requiredCorpus;
+
+    return RetirementProjections(
+      yearsToRetirement: yearsToRetirement,
+      estimatedCorpusRequired: requiredCorpus,
+      projectedSavingsAtCurrentRate: projectedCorpus,
+      shortfallOrSurplus: surplus,
     );
   }
 
@@ -342,5 +505,107 @@ class _RetirementPlanningPageState extends State<RetirementPlanningPage> {
     if (v >= 1e7) return '${(v / 1e7).toStringAsFixed(2)} Cr';
     if (v >= 1e5) return '${(v / 1e5).toStringAsFixed(2)} L';
     return v.toStringAsFixed(0);
+  }
+
+  RetirementProfile _safeProfile() {
+    return _profile ?? RetirementProfile(
+      age: 30,
+      retirementAgeGoal: 60,
+      income: 800000,
+      monthlyExpenses: 40000,
+      currentSavings: 300000,
+      riskLevel: 'moderate',
+    );
+  }
+
+  void _updateProfile({double? income, double? currentSavings}) {
+    final p = _safeProfile();
+    final updated = RetirementProfile(
+      age: p.age,
+      retirementAgeGoal: p.retirementAgeGoal,
+      income: income ?? p.income,
+      monthlyExpenses: p.monthlyExpenses,
+      currentSavings: currentSavings ?? p.currentSavings,
+      riskLevel: p.riskLevel,
+    );
+    setState(() {
+      _profile = updated;
+      _customProjections = _calcProjections(updated, _assumptions);
+    });
+  }
+
+  Widget _buildProfileAdjustmentsCard() {
+    final p = _safeProfile();
+    // Initialize controllers if empty
+    if (_incomeCtrl.text.isEmpty) {
+      _incomeCtrl.text = p.income.toStringAsFixed(0);
+    }
+    if (_currentSavingsCtrl.text.isEmpty) {
+      _currentSavingsCtrl.text = p.currentSavings.toStringAsFixed(0);
+    }
+    return Card(
+      elevation: 2,
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text('Adjust Profile', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 12),
+            Wrap(
+              spacing: 24,
+              runSpacing: 16,
+              children: [
+                SizedBox(
+                  width: 260,
+                  child: TextField(
+                    controller: _incomeCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Income (₹/yr)',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (v) {
+                      final parsed = double.tryParse(v.replaceAll(',', '').trim());
+                      if (parsed != null) {
+                        _updateProfile(income: parsed);
+                      }
+                    },
+                  ),
+                ),
+                SizedBox(
+                  width: 260,
+                  child: TextField(
+                    controller: _currentSavingsCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(
+                      labelText: 'Current Savings (₹)',
+                      border: OutlineInputBorder(),
+                    ),
+                    onSubmitted: (v) {
+                      final parsed = double.tryParse(v.replaceAll(',', '').trim());
+                      if (parsed != null) {
+                        _updateProfile(currentSavings: parsed);
+                      }
+                    },
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final inc = double.tryParse(_incomeCtrl.text.replaceAll(',', '').trim());
+                    final sav = double.tryParse(_currentSavingsCtrl.text.replaceAll(',', '').trim());
+                    _updateProfile(
+                      income: inc ?? _safeProfile().income,
+                      currentSavings: sav ?? _safeProfile().currentSavings,
+                    );
+                  },
+                  child: const Text('Apply changes'),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
