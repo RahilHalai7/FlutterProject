@@ -1041,6 +1041,8 @@ class _HomeScreenState extends State<HomeScreen> {
       const Color(0xFF7C2D12),
       const Color(0xFF0F766E),
       const Color(0xFF7E22CE),
+      const Color(0xFF1E40AF),
+      const Color(0xFF92400E),
     ];
 
     return colors[index % colors.length];
@@ -1454,7 +1456,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildDrawerItem(
                     icon: Icons.score,
                     title: 'Credit Score Prediction',
-                    onTap: () => Navigator.pushNamed(context, '/creditScore'),
+                    onTap: () => Navigator.pushNamed(context, '/cibil'),
                   ),
                   _buildDrawerItem(
                     icon: Icons.trending_up,
@@ -1464,21 +1466,27 @@ class _HomeScreenState extends State<HomeScreen> {
                   _buildDrawerItem(
                     icon: Icons.elderly,
                     title: 'Retirement Planning',
-                    onTap: () => Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => const RetirementPlanningPage(),
-                      ),
-                    ),
-                  ),
-                  _buildDrawerItem(
-                    icon: Icons.flag,
-                    title: 'Goal-Based Planning',
-                    onTap: () => Navigator.pushNamed(context, '/goals'),
+                    onTap: () => Navigator.pushNamed(context, '/retirement'),
                   ),
                   _buildDrawerItem(
                     icon: Icons.account_balance,
                     title: 'Loan Eligibility',
                     onTap: () => Navigator.pushNamed(context, '/loan'),
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.calculate,
+                    title: 'EMI Calculator',
+                    onTap: () => Navigator.pushNamed(context, '/emi'),
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.bar_chart,
+                    title: 'Income Data',
+                    onTap: () => Navigator.pushNamed(context, '/incomeData'),
+                  ),
+                  _buildDrawerItem(
+                    icon: Icons.person,
+                    title: 'Profile',
+                    onTap: () => Navigator.pushNamed(context, '/profile'),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(
