@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
-import 'main.dart'; // Import to access the API key
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'main.dart'; // Import to access the API key (geminiApiKey)
+import 'package:intl/intl.dart';
 
 class NLPAssistantScreen extends StatefulWidget {
   const NLPAssistantScreen({super.key});
@@ -14,6 +17,8 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
   final TextEditingController _queryController = TextEditingController();
   String _response = '';
   bool _isLoading = false;
+  bool _isFetchingHabits = false;
+  String? _spendingSummaryCache;
 
   late final GenerativeModel _model;
 
@@ -21,12 +26,132 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
   void initState() {
     super.initState();
     _model = GenerativeModel(model: 'gemini-2.0-flash', apiKey: geminiApiKey);
+    // Optionally prefetch spending summary at startup:
+    _prefetchSpendingSummary();
   }
 
   @override
   void dispose() {
     _queryController.dispose();
     super.dispose();
+  }
+
+  Future<void> _prefetchSpendingSummary() async {
+    setState(() => _isFetchingHabits = true);
+    try {
+      final s = await _fetchAndSummarizeSpending();
+      setState(() => _spendingSummaryCache = s);
+    } catch (e) {
+      // keep silent; we'll fetch on demand
+    } finally {
+      setState(() => _isFetchingHabits = false);
+    }
+  }
+
+  /// Fetches user's spending from Firestore and returns a human-readable summary.
+  /// Expected Firestore path: users/{uid}/spending
+  /// Each spending document should have at least:
+  ///   - amount: number
+  ///   - category: string
+  ///   - date: Timestamp or ISO string
+  Future<String?> _fetchAndSummarizeSpending() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      // No authenticated user available
+      return null;
+    }
+
+    final uid = user.uid;
+    final colRef = FirebaseFirestore.instance
+        .collection('users')
+        .doc(uid)
+        .collection('spending');
+
+    final snapshot = await colRef.get();
+    if (snapshot.docs.isEmpty) return null;
+
+    // aggregate by category and by month
+    final Map<String, double> byCategory = {};
+    final Map<String, double> byMonth = {};
+    double total = 0.0;
+
+    for (final doc in snapshot.docs) {
+      final data = doc.data();
+      // safe reads with fallbacks
+      dynamic amtRaw = data['amount'];
+      double amount;
+      if (amtRaw is num) {
+        amount = amtRaw.toDouble();
+      } else if (amtRaw is String) {
+        amount = double.tryParse(amtRaw) ?? 0.0;
+      } else {
+        amount = 0.0;
+      }
+
+      final category = (data['category'] ?? 'Uncategorized').toString();
+      DateTime date;
+      final rawDate = data['date'];
+      if (rawDate is Timestamp) {
+        date = rawDate.toDate();
+      } else if (rawDate is String) {
+        date = DateTime.tryParse(rawDate) ?? DateTime.now();
+      } else {
+        date = DateTime.now();
+      }
+
+      final monthKey = DateFormat('yyyy-MM').format(date);
+
+      byCategory[category] = (byCategory[category] ?? 0.0) + amount;
+      byMonth[monthKey] = (byMonth[monthKey] ?? 0.0) + amount;
+      total += amount;
+    }
+
+    // compute top categories
+    final sortedCategories = byCategory.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+    final topCategories = sortedCategories.take(5).toList();
+
+    // monthly average (over months present)
+    final monthsCount = byMonth.length;
+    final averageMonthly = monthsCount > 0 ? (total / monthsCount) : 0.0;
+
+    // recent 3 months total if available
+    final recentMonths = byMonth.keys.toList()..sort(); // ascending yyyy-MM
+    final last3 = recentMonths.reversed.take(3).toList();
+    double last3Total = 0.0;
+    for (final m in last3) {
+      last3Total += (byMonth[m] ?? 0.0);
+    }
+
+    // Build summary string
+    final buffer = StringBuffer();
+    buffer.writeln(
+      'Spending Summary (based on ${snapshot.docs.length} transactions):',
+    );
+    buffer.writeln('- Total spent recorded: ₹${total.toStringAsFixed(2)}');
+    buffer.writeln(
+      '- Months observed: $monthsCount, Average monthly spend: ₹${averageMonthly.toStringAsFixed(2)}',
+    );
+    if (last3.isNotEmpty) {
+      buffer.writeln(
+        '- Last ${last3.length} months total (${last3.join(', ')}): ₹${last3Total.toStringAsFixed(2)}',
+      );
+    }
+
+    buffer.writeln('- Top categories:');
+    for (final e in topCategories) {
+      final percent = total > 0 ? (e.value / total * 100) : 0.0;
+      buffer.writeln(
+        '  • ${e.key}: ₹${e.value.toStringAsFixed(2)} (${percent.toStringAsFixed(1)}%)',
+      );
+    }
+
+    buffer.writeln(
+      '- Example monthly breakdown (YYYY-MM: total): ${byMonth.entries.map((e) => '${e.key}: ₹${e.value.toStringAsFixed(0)}').join('; ')}',
+    );
+
+    // Return the summary
+    return buffer.toString();
   }
 
   Future<void> _processQuery() async {
@@ -39,25 +164,43 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
     });
 
     try {
-      // Prepare the prompt with financial NLP context
-      final prompt =
-          '''
-      You are a financial NLP assistant that specializes in understanding and answering 
-      natural language queries about finance. Your expertise includes:
-      
-      1. Analyzing financial statements and metrics
-      2. Explaining financial concepts in simple terms
-      3. Providing educational information about investing, saving, and budgeting
-      4. Helping users understand financial terminology
-      5. Offering general financial planning guidance
-      
-      Respond with clear, structured information that directly addresses the user's query.
-      Format your response using markdown for better readability.
-      
-      User query: $query
-      ''';
+      // Ensure we have spending summary (use cache if already fetched)
+      String? spendingSummary = _spendingSummaryCache;
+      if (spendingSummary == null) {
+        setState(() => _isFetchingHabits = true);
+        try {
+          spendingSummary = await _fetchAndSummarizeSpending();
+          _spendingSummaryCache = spendingSummary;
+        } catch (e) {
+          spendingSummary = null; // proceed without it
+        } finally {
+          setState(() => _isFetchingHabits = false);
+        }
+      }
 
-      final content = [Content.text(prompt)];
+      // Prepare the prompt with financial NLP context and user's spending summary
+      final promptBuffer = StringBuffer();
+      promptBuffer.writeln(
+        'You are a financial NLP assistant that specializes in understanding and answering natural language queries about personal finance. Your expertise includes:\n\n1. Analyzing financial statements and metrics\n2. Explaining financial concepts in simple terms\n3. Providing educational information about investing, saving, and budgeting\n4. Helping users understand financial terminology\n5. Offering general financial planning guidance\n\nRespond with clear, structured information that directly addresses the user\'s query. Format your response using markdown for better readability.\n',
+      );
+
+      if (spendingSummary != null) {
+        promptBuffer.writeln(
+          'User spending summary (from their transaction history):\n',
+        );
+        promptBuffer.writeln('"""\n$spendingSummary\n"""');
+        promptBuffer.writeln(
+          'When giving recommendations, use the spending summary above. Provide specific, actionable suggestions (e.g., adjust budgets by category, reduce recurring subscriptions, save X% monthly) and mention any assumptions you make.\n',
+        );
+      } else {
+        promptBuffer.writeln(
+          'No spending data available or not authenticated. Provide general actionable suggestions and prompt user for permission to connect their transaction data if needed.\n',
+        );
+      }
+
+      promptBuffer.writeln('User query: $query');
+
+      final content = [Content.text(promptBuffer.toString())];
       final response = await _model.generateContent(content);
       final responseText =
           response.text ?? 'Sorry, I couldn\'t generate a response.';
@@ -74,41 +217,6 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Smart Query Assistant',
-          style: TextStyle(color: Colors.white),
-        ),
-        backgroundColor: Colors.green,
-        iconTheme: const IconThemeData(color: Colors.white),
-      ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              _buildQueryInput(),
-              const SizedBox(height: 20),
-              _isLoading
-                  ? const Expanded(
-                      child: Center(child: CircularProgressIndicator()),
-                    )
-                  : Expanded(
-                      child: _response.isEmpty
-                          ? _buildInitialInstructions()
-                          : _buildResponseArea(),
-                    ),
-            ],
-          ),
-        ),
-      ),
-    );
   }
 
   Widget _buildQueryInput() {
@@ -128,7 +236,7 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
             TextField(
               controller: _queryController,
               decoration: InputDecoration(
-                hintText: 'E.g., "What is compound interest?"',
+                hintText: 'E.g., "How can I reduce my monthly spending?"',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -138,19 +246,61 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
               maxLines: 3,
               textCapitalization: TextCapitalization.sentences,
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _processQuery,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.green,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                ElevatedButton(
+                  onPressed: _processQuery,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 12,
+                      horizontal: 18,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text('Submit Query'),
                 ),
-              ),
-              child: const Text('Submit Query'),
+                const SizedBox(width: 12),
+                OutlinedButton(
+                  onPressed: () async {
+                    setState(() => _isFetchingHabits = true);
+                    final s = await _fetchAndSummarizeSpending();
+                    setState(() {
+                      _spendingSummaryCache = s;
+                      _isFetchingHabits = false;
+                    });
+                    final snack = s == null
+                        ? 'No spending data found / not signed in.'
+                        : 'Spending summary refreshed.';
+                    if (mounted)
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(snack)));
+                  },
+                  child: const Text('Refresh Spending Data'),
+                ),
+              ],
             ),
+            const SizedBox(height: 8),
+            if (_isFetchingHabits)
+              const Text(
+                'Fetching spending data...',
+                style: TextStyle(fontSize: 12, color: Colors.black54),
+              ),
+            if (!_isFetchingHabits && _spendingSummaryCache != null)
+              Text(
+                'Spending data loaded (used in recommendations).',
+                style: TextStyle(fontSize: 12, color: Colors.green[700]),
+              ),
+            if (!_isFetchingHabits && _spendingSummaryCache == null)
+              Text(
+                'No spending data loaded.',
+                style: TextStyle(fontSize: 12, color: Colors.red[700]),
+              ),
           ],
         ),
       ),
@@ -173,7 +323,7 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 32.0),
             child: Text(
-              'I can help with budgeting, investments, financial terms, and more!',
+              'I can help with budgeting, investments, financial terms, and more! If you sign in and store transactions in Firestore (users/{uid}/spending), I will use your spending data to give personalized advice.',
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
               textAlign: TextAlign.center,
             ),
@@ -235,6 +385,41 @@ class _NLPAssistantScreenState extends State<NLPAssistantScreen> {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Smart Query Assistant',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.green,
+        iconTheme: const IconThemeData(color: Colors.white),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildQueryInput(),
+              const SizedBox(height: 20),
+              _isLoading
+                  ? const Expanded(
+                      child: Center(child: CircularProgressIndicator()),
+                    )
+                  : Expanded(
+                      child: _response.isEmpty
+                          ? _buildInitialInstructions()
+                          : _buildResponseArea(),
+                    ),
+            ],
+          ),
         ),
       ),
     );

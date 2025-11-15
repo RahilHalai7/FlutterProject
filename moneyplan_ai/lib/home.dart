@@ -5,6 +5,7 @@ import 'dart:math' as math;
 import 'services/live_rates_service.dart';
 import 'screens/investment_portfolio_page.dart';
 import 'screens/retirement_planning_page.dart';
+import 'services/bank_integration_service.dart';
 
 // Global Floating Live Rates Widget
 class FloatingLiveRates extends StatefulWidget {
@@ -495,6 +496,24 @@ class _HomeScreenState extends State<HomeScreen> {
               icon: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
+                  color: Colors.green.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(Icons.account_balance, color: Colors.green),
+              ),
+              onPressed: () => Navigator.pushNamed(
+                context,
+                '/profile',
+              ), //_showBankAccountOptions(context),
+              tooltip: 'Link Bank Account',
+            ),
+          ),
+          Container(
+            margin: const EdgeInsets.only(right: 8),
+            child: IconButton(
+              icon: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(10),
                 ),
@@ -625,11 +644,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
                   title: "Investment Portfolio",
-                  subtitle: "Check out tailored opportunities and manage your portfolio",
+                  subtitle:
+                      "Check out tailored opportunities and manage your portfolio",
                   icon: Icons.trending_up,
                   color: const Color(0xFF8B5CF6),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const InvestmentPortfolioPage()),
+                    MaterialPageRoute(
+                      builder: (_) => const InvestmentPortfolioPage(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
