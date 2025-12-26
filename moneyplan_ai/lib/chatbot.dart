@@ -181,9 +181,7 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
       decoration: BoxDecoration(
         color: Colors.white.withOpacity(0.06),
-        border: Border(
-          top: BorderSide(color: Colors.white.withOpacity(0.08)),
-        ),
+        border: Border(top: BorderSide(color: Colors.white.withOpacity(0.08))),
       ),
       child: Row(
         children: [
@@ -200,7 +198,10 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25.0),
-                  borderSide: const BorderSide(color: Color(0xFF8B5CF6), width: 2),
+                  borderSide: const BorderSide(
+                    color: Color(0xFF8B5CF6),
+                    width: 2,
+                  ),
                 ),
                 filled: true,
                 fillColor: Colors.white.withOpacity(0.08),
@@ -218,17 +219,17 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
               ? const SizedBox(
                   height: 24,
                   width: 24,
-                  child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                  child: CircularProgressIndicator(
+                    color: Colors.white,
+                    strokeWidth: 2,
+                  ),
                 )
               : Container(
                   decoration: BoxDecoration(
                     gradient: const LinearGradient(
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
-                      colors: [
-                        Color(0xFF4C1D95),
-                        Color(0xFF6D28D9),
-                      ],
+                      colors: [Color(0xFF4C1D95), Color(0xFF6D28D9)],
                     ),
                     borderRadius: BorderRadius.circular(25),
                     boxShadow: [
@@ -244,8 +245,13 @@ class _ChatbotScreenState extends State<ChatbotScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.transparent,
                       shadowColor: Colors.transparent,
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(25)),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(25),
+                      ),
                     ),
                     child: const Icon(Icons.send, color: Colors.white),
                   ),

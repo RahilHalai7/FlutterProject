@@ -36,12 +36,14 @@ class RetirementProjections {
   final double estimatedCorpusRequired;
   final double projectedSavingsAtCurrentRate;
   final double shortfallOrSurplus;
+  final String? modelSource;
 
   RetirementProjections({
     required this.yearsToRetirement,
     required this.estimatedCorpusRequired,
     required this.projectedSavingsAtCurrentRate,
     required this.shortfallOrSurplus,
+    this.modelSource,
   });
 
   factory RetirementProjections.fromJson(Map<String, dynamic> j) =>
@@ -52,6 +54,7 @@ class RetirementProjections {
         projectedSavingsAtCurrentRate:
             (j['projected_savings_at_current_rate'] ?? 0).toDouble(),
         shortfallOrSurplus: (j['shortfall_or_surplus'] ?? 0).toDouble(),
+        modelSource: j['model_source']?.toString(),
       );
 }
 
@@ -91,7 +94,6 @@ class RetirementService {
       throw Exception('Failed to load retirement profile');
     }
     var backend = RetirementProfile.fromJson(jsonDecode(res.body));
-
 
     return backend;
   }

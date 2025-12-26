@@ -8,7 +8,8 @@ class InvestmentPortfolioPage extends StatefulWidget {
   const InvestmentPortfolioPage({super.key});
 
   @override
-  State<InvestmentPortfolioPage> createState() => _InvestmentPortfolioPageState();
+  State<InvestmentPortfolioPage> createState() =>
+      _InvestmentPortfolioPageState();
 }
 
 class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
@@ -26,7 +27,11 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
   }
 
   void _addToPortfolio(Opportunity opp, {double allocation = 10.0}) async {
-    final resp = await PortfolioService.updatePortfolio(action: 'add', item: opp, allocationPercent: allocation);
+    final resp = await PortfolioService.updatePortfolio(
+      action: 'add',
+      item: opp,
+      allocationPercent: allocation,
+    );
     final byCategory = (resp['by_category'] as Map<dynamic, dynamic>?) ?? {};
     setState(() {
       _allocations.clear();
@@ -44,16 +49,31 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-              Text('Age: ${p.age}', style: const TextStyle(fontSize: 16)),
-              const SizedBox(height: 6),
-              Text('Job: ${p.job}', style: const TextStyle(fontSize: 16)),
-            ]),
-            Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text('Income: ₹${p.income}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
-              const SizedBox(height: 6),
-              Text('Risk Level: ${p.riskLevel}', style: const TextStyle(fontSize: 16)),
-            ]),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('Age: ${p.age}', style: const TextStyle(fontSize: 16)),
+                const SizedBox(height: 6),
+                Text('Job: ${p.job}', style: const TextStyle(fontSize: 16)),
+              ],
+            ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  'Income: ₹${p.income}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Risk Level: ${p.riskLevel}',
+                  style: const TextStyle(fontSize: 16),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -63,10 +83,22 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
   List<PieChartSectionData> _buildSections() {
     if (_allocations.isEmpty) {
       return [
-        PieChartSectionData(value: 100, title: 'No Data', color: Colors.grey.shade300, radius: 60),
+        PieChartSectionData(
+          value: 100,
+          title: 'No Data',
+          color: Colors.grey.shade300,
+          radius: 60,
+        ),
       ];
     }
-    final colors = [Colors.blue, Colors.orange, Colors.red, Colors.green, Colors.purple, Colors.teal];
+    final colors = [
+      Colors.blue,
+      Colors.orange,
+      Colors.red,
+      Colors.green,
+      Colors.purple,
+      Colors.teal,
+    ];
     int i = 0;
     return _allocations.entries.map((e) {
       final section = PieChartSectionData(
@@ -99,7 +131,10 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(opp.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+            Text(
+              opp.title,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+            ),
             const SizedBox(height: 6),
             Text('${opp.category} • Expected: ${opp.expectedReturn}'),
             const SizedBox(height: 8),
@@ -107,13 +142,30 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(color: _riskColor(opp.risk).withOpacity(0.15), borderRadius: BorderRadius.circular(8), border: Border.all(color: _riskColor(opp.risk))),
-                  child: Text('Risk: ${opp.risk}', style: TextStyle(color: _riskColor(opp.risk), fontWeight: FontWeight.w600)),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: _riskColor(opp.risk).withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: _riskColor(opp.risk)),
+                  ),
+                  child: Text(
+                    'Risk: ${opp.risk}',
+                    style: TextStyle(
+                      color: _riskColor(opp.risk),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
                 ),
-                ElevatedButton.icon(onPressed: () => _addToPortfolio(opp, allocation: 10.0), icon: const Icon(Icons.add), label: const Text('Add to Portfolio')),
+                ElevatedButton.icon(
+                  onPressed: () => _addToPortfolio(opp, allocation: 10.0),
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add to Portfolio'),
+                ),
               ],
-            )
+            ),
           ],
         ),
       ),
@@ -124,7 +176,13 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
     return Shimmer.fromColors(
       baseColor: Colors.grey.shade300,
       highlightColor: Colors.grey.shade100,
-      child: Container(height: height, decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(12))),
+      child: Container(
+        height: height,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
     );
   }
 
@@ -158,69 +216,92 @@ class _InvestmentPortfolioPageState extends State<InvestmentPortfolioPage> {
             stops: [0.0, 0.25, 0.5, 0.75, 1.0],
           ),
         ),
-        child: LayoutBuilder(builder: (context, constraints) {
-        final isWide = constraints.maxWidth > 700;
-        return SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            // Section 1: Profile Snapshot
-            FutureBuilder<UserProfile>(
-              future: _profileFuture,
-              builder: (context, snap) {
-                if (!snap.hasData) {
-                  return _loadingShimmer(height: 90);
-                }
-                return _profileCard(snap.data!);
-              },
-            ),
-            const SizedBox(height: 16),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isWide = constraints.maxWidth > 700;
+            return SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Section 1: Profile Snapshot
+                  FutureBuilder<UserProfile>(
+                    future: _profileFuture,
+                    builder: (context, snap) {
+                      if (!snap.hasData) {
+                        return _loadingShimmer(height: 90);
+                      }
+                      return _profileCard(snap.data!);
+                    },
+                  ),
+                  const SizedBox(height: 16),
 
-            // Section 2: Portfolio Summary (Pie Chart)
-            Card(
-              elevation: 2,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 300),
-                padding: const EdgeInsets.all(16),
-                child: SizedBox(
-                  height: isWide ? 240 : 200,
-                  child: PieChart(PieChartData(sectionsSpace: 4, centerSpaceRadius: 40, sections: _buildSections())),
-                ),
+                  // Section 2: Portfolio Summary (Pie Chart)
+                  Card(
+                    elevation: 2,
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 300),
+                      padding: const EdgeInsets.all(16),
+                      child: SizedBox(
+                        height: isWide ? 240 : 200,
+                        child: PieChart(
+                          PieChartData(
+                            sectionsSpace: 4,
+                            centerSpaceRadius: 40,
+                            sections: _buildSections(),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Section 3: Recommended Opportunities
+                  const Text(
+                    'Recommended Opportunities',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 8),
+                  FutureBuilder<List<Opportunity>>(
+                    future: _oppsFuture,
+                    builder: (context, snap) {
+                      if (!snap.hasData) {
+                        return Column(
+                          children: [
+                            _loadingShimmer(height: 120),
+                            const SizedBox(height: 8),
+                            _loadingShimmer(height: 120),
+                            const SizedBox(height: 8),
+                            _loadingShimmer(height: 120),
+                          ],
+                        );
+                      }
+                      final opps = snap.data!;
+                      if (isWide) {
+                        return GridView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          gridDelegate:
+                              const SliverGridDelegateWithFixedCrossAxisCount(
+                                crossAxisCount: 2,
+                                childAspectRatio: 3,
+                              ),
+                          itemCount: opps.length,
+                          itemBuilder: (context, i) =>
+                              _opportunityCard(opps[i]),
+                        );
+                      }
+                      return Column(
+                        children: opps.map(_opportunityCard).toList(),
+                      );
+                    },
+                  ),
+                ],
               ),
-            ),
-            const SizedBox(height: 16),
-
-            // Section 3: Recommended Opportunities
-            const Text('Recommended Opportunities', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            FutureBuilder<List<Opportunity>>(
-              future: _oppsFuture,
-              builder: (context, snap) {
-                if (!snap.hasData) {
-                  return Column(children: [
-                    _loadingShimmer(height: 120),
-                    const SizedBox(height: 8),
-                    _loadingShimmer(height: 120),
-                    const SizedBox(height: 8),
-                    _loadingShimmer(height: 120),
-                  ]);
-                }
-                final opps = snap.data!;
-                if (isWide) {
-                  return GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 2, childAspectRatio: 3),
-                    itemCount: opps.length,
-                    itemBuilder: (context, i) => _opportunityCard(opps[i]),
-                  );
-                }
-                return Column(children: opps.map(_opportunityCard).toList());
-              },
-            ),
-          ]),
-        );
-      }),
-    ),
-  );
-}
+            );
+          },
+        ),
+      ),
+    );
+  }
 }

@@ -1,5 +1,6 @@
 import os
-from typing import List, Dict, Any
+import pickle
+from typing import List, Dict, Any, Callable
 
 from fastapi import FastAPI, Body
 from fastapi.middleware.cors import CORSMiddleware
@@ -71,6 +72,62 @@ BASE_OPPORTUNITIES: List[Dict[str, Any]] = [
 # Simple in-memory portfolio structure: { title, category, allocation_percent }
 PORTFOLIO: List[Dict[str, Any]] = []
 RETIREMENT_STRATEGY: List[Dict[str, Any]] = []
+
+# Attempt to load retirement calculator from a pickle file
+RETIREMENT_CALCULATOR = None
+RETIREMENT_CALCULATOR_SOURCE = None
+
+def _load_retirement_calculator() -> None:
+    global RETIREMENT_CALCULATOR, RETIREMENT_CALCULATOR_SOURCE
+    candidates = [
+        os.path.join(os.getcwd(), 'retirement_calculator_functions.pkl'),
+        os.path.join(os.path.dirname(__file__), 'retirement_calculator_functions.pkl'),
+        os.path.join(os.path.dirname(__file__), 'moneyplan_ai', 'retirement_calculator_functions.pkl'),
+    ]
+    for path in candidates:
+        try:
+            if os.path.exists(path):
+                with open(path, 'rb') as f:
+                    RETIREMENT_CALCULATOR = pickle.load(f)
+                RETIREMENT_CALCULATOR_SOURCE = path
+                print(f"[retirement] Loaded calculator from: {path}")
+                return
+        except Exception as e:
+            print(f"[retirement] Failed to load calculator from {path}: {e}")
+    print("[retirement] Calculator pickle not found; using fallback formula.")
+
+_load_retirement_calculator()
+
+def _compute_with_calculator(payload: Dict[str, Any]) -> Dict[str, Any] | None:
+    """Try to compute projections via the loaded pickle calculator.
+    Supports several shapes:
+    - A callable taking the payload dict and returning a dict
+    - An object with 'calculate_projections' or 'compute' method
+    - A dict containing a callable under 'calculate_projections' or 'compute'
+    Returns None if computation fails or calculator missing.
+    """
+    calc = RETIREMENT_CALCULATOR
+    if not calc:
+        return None
+    try:
+        # Direct callable
+        if isinstance(calc, Callable):
+            return calc(payload)
+        # Object with method
+        for name in ('calculate_projections', 'compute', 'predict'):
+            fn = getattr(calc, name, None)
+            if callable(fn):
+                return fn(payload)
+        # Dict containing a callable
+        if isinstance(calc, dict):
+            for name in ('calculate_projections', 'compute', 'predict'):
+                fn = calc.get(name)
+                if callable(fn):
+                    return fn(payload)
+        return None
+    except Exception as e:
+        print(f"[retirement] Calculator compute failed: {e}")
+        return None
 
 
 @app.get("/user/profile")
@@ -175,31 +232,49 @@ def _expected_return_from_risk(risk: str) -> float:
 @app.get("/retirement/projections")
 def get_retirement_projections() -> Dict[str, Any]:
     profile = RETIREMENT_PROFILE
-    age = int(profile.get("age", 30))
-    retirement_age_goal = int(profile.get("retirement_age_goal", 60))
+    payload = {
+        "age": int(profile.get("age", 30)),
+        "retirement_age_goal": int(profile.get("retirement_age_goal", 60)),
+        "income": float(profile.get("income", 1200000)),  # yearly
+        "monthly_expenses": float(profile.get("monthly_expenses", 40000)),
+        "current_savings": float(profile.get("current_savings", 800000)),
+        "risk_level": profile.get("risk_level", "moderate"),
+    }
+
+    # Try calculator first
+    calc_result = _compute_with_calculator(payload)
+    if isinstance(calc_result, dict) and {
+        "years_to_retirement",
+        "estimated_corpus_required",
+        "projected_savings_at_current_rate",
+        "shortfall_or_surplus",
+    }.issubset(calc_result.keys()):
+        return {
+            **{k: float(calc_result[k]) if isinstance(calc_result[k], (int, float)) else calc_result[k]
+               for k in calc_result},
+            "model_source": RETIREMENT_CALCULATOR_SOURCE or "pkl",
+        }
+
+    # Fallback formula (if no calculator or incompatible output)
+    age = payload["age"]
+    retirement_age_goal = payload["retirement_age_goal"]
     years_to_retirement = max(retirement_age_goal - age, 0)
+    income = payload["income"]
+    monthly_expenses = payload["monthly_expenses"]
+    current_savings = payload["current_savings"]
+    risk_level = payload["risk_level"]
 
-    income = float(profile.get("income", 1200000))  # yearly
-    monthly_expenses = float(profile.get("monthly_expenses", 40000))
-    current_savings = float(profile.get("current_savings", 800000))
-    risk_level = profile.get("risk_level", "moderate")
-
-    # Assumptions
     annual_inflation = 0.06
     post_retirement_years = 25
     expected_return = _expected_return_from_risk(risk_level)
 
-    # Adjust monthly expenses to retirement year using compounding inflation
     adjusted_monthly_expenses = monthly_expenses * ((1 + annual_inflation) ** years_to_retirement)
     estimated_corpus_required = adjusted_monthly_expenses * 12 * post_retirement_years
 
-    # Project savings using simple FV formula with yearly compounding on monthly contributions
     monthly_surplus = max(income / 12.0 - monthly_expenses, 0.0)
     r = expected_return
     n = years_to_retirement
-    # Future value of current savings
     fv_savings = current_savings * ((1 + r) ** n)
-    # Approximate future value of monthly contributions compounded annually
     fv_contrib = 0.0
     if r > 0 and n > 0 and monthly_surplus > 0:
         yearly_contrib = monthly_surplus * 12
@@ -213,6 +288,7 @@ def get_retirement_projections() -> Dict[str, Any]:
         "estimated_corpus_required": round(estimated_corpus_required, 2),
         "projected_savings_at_current_rate": round(projected, 2),
         "shortfall_or_surplus": round(shortfall_or_surplus, 2),
+        "model_source": "fallback",
     }
 
 

@@ -8,7 +8,9 @@ class EmiCalculatorScreen extends StatefulWidget {
 }
 
 class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
-  final TextEditingController _amountCtrl = TextEditingController(text: '500000');
+  final TextEditingController _amountCtrl = TextEditingController(
+    text: '500000',
+  );
   final TextEditingController _rateCtrl = TextEditingController(text: '10');
   final TextEditingController _monthsCtrl = TextEditingController(text: '60');
   final TextEditingController _prepayCtrl = TextEditingController(text: '0');
@@ -53,7 +55,13 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
     if (extraPrepay <= 0) {
       final double totalPay = baseEmi * months;
       final double interest = totalPay - principal;
-      final List<_EmiMonth> sched = _buildSchedule(principal, r, baseEmi, months, 0);
+      final List<_EmiMonth> sched = _buildSchedule(
+        principal,
+        r,
+        baseEmi,
+        months,
+        0,
+      );
       setState(() {
         emi = _round(baseEmi);
         totalInterest = _round(interest);
@@ -67,7 +75,8 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
       int m = 0;
       double interestAcc = 0;
       final List<_EmiMonth> sched = [];
-      while (bal > 0 && m < 6000) { // hard cap for safety
+      while (bal > 0 && m < 6000) {
+        // hard cap for safety
         m += 1;
         final double interest = bal * r;
         final double principalPaid = baseEmi - interest;
@@ -77,12 +86,14 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
           totalPaidThisMonth += newBal; // reduce last payment if overshoot
           newBal = 0;
         }
-        sched.add(_EmiMonth(
-          month: m,
-          interest: interest,
-          principal: principalPaid + extraPrepay,
-          balance: newBal,
-        ));
+        sched.add(
+          _EmiMonth(
+            month: m,
+            interest: interest,
+            principal: principalPaid + extraPrepay,
+            balance: newBal,
+          ),
+        );
         interestAcc += interest;
         bal = newBal;
       }
@@ -107,7 +118,13 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
 
   double _round(double v) => double.parse(v.toStringAsFixed(2));
 
-  List<_EmiMonth> _buildSchedule(double principal, double r, double emi, int months, double extra) {
+  List<_EmiMonth> _buildSchedule(
+    double principal,
+    double r,
+    double emi,
+    int months,
+    double extra,
+  ) {
     double bal = principal;
     final List<_EmiMonth> sched = [];
     for (int m = 1; m <= months; m++) {
@@ -115,12 +132,14 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
       final double principalPaid = emi - interest + extra;
       bal = bal - (emi - interest) - extra;
       if (bal < 0) bal = 0;
-      sched.add(_EmiMonth(
-        month: m,
-        interest: interest,
-        principal: emi - interest + extra,
-        balance: bal,
-      ));
+      sched.add(
+        _EmiMonth(
+          month: m,
+          interest: interest,
+          principal: emi - interest + extra,
+          balance: bal,
+        ),
+      );
       if (bal <= 0) break;
     }
     return sched;
@@ -159,63 +178,76 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
           child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Loan Details',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 12),
-            _numberField(_amountCtrl, 'Loan Amount (₹)', prefix: '₹'),
-            const SizedBox(height: 12),
-            _numberField(_rateCtrl, 'Annual Interest Rate (%)', suffix: '%'),
-            const SizedBox(height: 12),
-            _numberField(_monthsCtrl, 'Tenure (months)'),
-            const SizedBox(height: 12),
-            _numberField(_prepayCtrl, 'Extra Monthly Prepayment (₹)', prefix: '₹'),
-            const SizedBox(height: 16),
-            Container(
-              height: 56,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
-                ),
-                borderRadius: BorderRadius.circular(16),
-                boxShadow: [
-                  BoxShadow(
-                    color: const Color(0xFF8B5CF6).withOpacity(0.3),
-                    blurRadius: 12,
-                    offset: const Offset(0, 6),
-                  ),
-                ],
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Loan Details',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
-              child: ElevatedButton(
-                onPressed: _calculate,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.transparent,
-                  shadowColor: Colors.transparent,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+              const SizedBox(height: 12),
+              _numberField(_amountCtrl, 'Loan Amount (₹)', prefix: '₹'),
+              const SizedBox(height: 12),
+              _numberField(_rateCtrl, 'Annual Interest Rate (%)', suffix: '%'),
+              const SizedBox(height: 12),
+              _numberField(_monthsCtrl, 'Tenure (months)'),
+              const SizedBox(height: 12),
+              _numberField(
+                _prepayCtrl,
+                'Extra Monthly Prepayment (₹)',
+                prefix: '₹',
+              ),
+              const SizedBox(height: 16),
+              Container(
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFF8B5CF6), Color(0xFF3B82F6)],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                      blurRadius: 12,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
+                ),
+                child: ElevatedButton(
+                  onPressed: _calculate,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.transparent,
+                    shadowColor: Colors.transparent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                  ),
+                  child: const Text(
+                    'Calculate EMI',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
-                child: const Text(
-                  'Calculate EMI',
-                  style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.w600),
-                ),
               ),
-            ),
-            const SizedBox(height: 16),
-            if (emi != null) _resultsCard(),
-            const SizedBox(height: 8),
-            if (schedule.isNotEmpty) _schedulePreview(),
-          ],
+              const SizedBox(height: 16),
+              if (emi != null) _resultsCard(),
+              const SizedBox(height: 8),
+              if (schedule.isNotEmpty) _schedulePreview(),
+            ],
+          ),
         ),
       ),
-    ),
-  );
+    );
   }
-  
-  Widget _numberField(TextEditingController ctrl, String label, {String? prefix, String? suffix}) {
+
+  Widget _numberField(
+    TextEditingController ctrl,
+    String label, {
+    String? prefix,
+    String? suffix,
+  }) {
     return TextField(
       controller: ctrl,
       keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -239,7 +271,10 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
           borderRadius: BorderRadius.all(Radius.circular(16)),
           borderSide: BorderSide(color: Color(0xFF8B5CF6), width: 2),
         ),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 16,
+        ),
       ),
     );
   }
@@ -252,7 +287,10 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Results', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Results',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             _statRow('Monthly EMI', '₹${emi!.toStringAsFixed(2)}'),
             _statRow('Total Interest', '₹${totalInterest!.toStringAsFixed(2)}'),
@@ -286,7 +324,10 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text('Amortization (first 12 months)', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            const Text(
+              'Amortization (first 12 months)',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
             const SizedBox(height: 8),
             for (int i = 0; i < count; i++)
               Padding(
@@ -295,8 +336,12 @@ class _EmiCalculatorScreenState extends State<EmiCalculatorScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text('Month ${schedule[i].month}'),
-                    Text('Interest: ₹${schedule[i].interest.toStringAsFixed(0)}'),
-                    Text('Principal: ₹${schedule[i].principal.toStringAsFixed(0)}'),
+                    Text(
+                      'Interest: ₹${schedule[i].interest.toStringAsFixed(0)}',
+                    ),
+                    Text(
+                      'Principal: ₹${schedule[i].principal.toStringAsFixed(0)}',
+                    ),
                     Text('Bal: ₹${schedule[i].balance.toStringAsFixed(0)}'),
                   ],
                 ),
@@ -313,5 +358,10 @@ class _EmiMonth {
   final double interest;
   final double principal;
   final double balance;
-  _EmiMonth({required this.month, required this.interest, required this.principal, required this.balance});
+  _EmiMonth({
+    required this.month,
+    required this.interest,
+    required this.principal,
+    required this.balance,
+  });
 }

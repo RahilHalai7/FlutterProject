@@ -625,11 +625,14 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
                   title: "Investment Portfolio",
-                  subtitle: "Check out tailored opportunities and manage your portfolio",
+                  subtitle:
+                      "Check out tailored opportunities and manage your portfolio",
                   icon: Icons.trending_up,
                   color: const Color(0xFF8B5CF6),
                   onTap: () => Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const InvestmentPortfolioPage()),
+                    MaterialPageRoute(
+                      builder: (_) => const InvestmentPortfolioPage(),
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -639,14 +642,6 @@ class _HomeScreenState extends State<HomeScreen> {
                   icon: Icons.elderly,
                   color: Colors.orange,
                   onTap: () => Navigator.pushNamed(context, '/retirement'),
-                ),
-                const SizedBox(height: 24),
-                _buildEnhancedFeatureCard(
-                  title: "Goal-Based Planning",
-                  subtitle: "Plan your income wisely",
-                  icon: Icons.flag,
-                  color: Colors.red,
-                  onTap: () => Navigator.pushNamed(context, '/goals'),
                 ),
                 const SizedBox(height: 24),
                 _buildEnhancedFeatureCard(
