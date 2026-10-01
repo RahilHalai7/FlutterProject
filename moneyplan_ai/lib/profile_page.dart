@@ -266,7 +266,7 @@ class _ProfilePageState extends State<ProfilePage> {
       }
 
       // Reload the profile to get fresh data
-      _loadUserProfile();
+   _loadUserProfile();
     } catch (e) {
       setState(() => _isSaving = false);
       if (mounted) {
